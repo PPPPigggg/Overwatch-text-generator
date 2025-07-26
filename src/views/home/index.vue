@@ -260,6 +260,14 @@ const copyContent = async () => {
     })
   }
 }
+
+// 清空内容
+const clearContent = () => {
+  if (editorRef.value) {
+    editorRef.value.innerHTML = ""
+    saveSelection()
+  }
+}
 </script>
 
 <template>
@@ -316,9 +324,14 @@ const copyContent = async () => {
                 class="color-swatch-input"
               />
             </div>
-            <SvgIcon name="copy" @click="copyContent" class="copy-btn"
-              >复制</SvgIcon
-            >
+            <div>
+              <SvgIcon
+                name="clear"
+                @click="clearContent"
+                class="clear-btn mr-3"
+              ></SvgIcon>
+              <SvgIcon name="copy" @click="copyContent" class="copy-btn" />
+            </div>
           </div>
         </div>
       </div>
@@ -459,7 +472,8 @@ const copyContent = async () => {
   }
 }
 
-.copy-btn {
+.copy-btn,
+.clear-btn {
   border-radius: 4px;
   width: 24px;
   height: 24px;
