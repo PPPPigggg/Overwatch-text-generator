@@ -1,5 +1,5 @@
 import "nprogress/nprogress.css" // 进度条样式
-import { createRouter, createWebHashHistory } from "vue-router"
+import { createRouter, createWebHistory } from "vue-router"
 
 import { createRouterGuards } from "./guards/index"
 import notAuthRoutes from "./modules/not-auth-modules/index"
@@ -21,7 +21,7 @@ const whiteNameList = flatRouter(deepClone(notAuthRoutes)).map(
 
 export const router = createRouter({
   // process.env.BASE_URL
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes,
 })
 
