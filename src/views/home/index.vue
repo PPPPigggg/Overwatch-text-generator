@@ -183,9 +183,6 @@ const applyColor = (color: string) => {
 }
 
 const clearFont = (e: InputEvent) => {
-  const selection = window.getSelection()
-  if (!selection || selection.rangeCount === 0) return
-  const range = selection.getRangeAt(0)
   const target = e.target as HTMLElement
   Array.from(target.querySelectorAll("font")).forEach((font) => {
     // 存放所有子节点
@@ -196,10 +193,6 @@ const clearFont = (e: InputEvent) => {
     // 用content替换font自己，效果就是把内容提上来
     font.parentNode?.replaceChild(fragment, font)
   })
-
-  range.collapse(false)
-  selection.removeAllRanges()
-  selection.addRange(range)
 }
 
 // 复制内容
