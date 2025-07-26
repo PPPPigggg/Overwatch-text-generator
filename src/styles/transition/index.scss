@@ -1,10 +1,10 @@
-@import "./base";
-@import "./fade";
-@import "./scale";
-@import "./slide";
-@import "./scroll";
-@import "./zoom";
-@import "./entry";
+@use "base";
+@use "fade";
+@use "scale";
+@use "slide";
+@use "scroll";
+@use "zoom";
+@use "entry";
 
 .collapse-transition {
   transition:

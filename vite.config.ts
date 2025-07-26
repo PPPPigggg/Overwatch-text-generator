@@ -57,7 +57,7 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
     plugins: [...createVitePlugins(isBuild)],
     server: {
       host: "0.0.0.0",
-      port: 80,
+      port: 8080,
       // proxy: proxy(env),
     },
     optimizeDeps: {

@@ -4,9 +4,20 @@ body {
   flex-direction: column;
   width: 100vw;
   height: 100vh;
-  background-color: var(--fill-color-2);
+  background-color: rgb(248 244 241 / 100%);
+  line-height: 1.625rem;
+  font-family:
+    Ginto, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   font-size: 16px;
+  font-size: 1.0625rem;
   color: var(--text-color-2);
+  color: rgb(var(--color-foreground-800) / 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variation-settings:
+    "opsz" 40,
+    "wght" 410;
 
   #app {
     overflow-y: auto;

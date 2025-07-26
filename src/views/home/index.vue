@@ -1,27 +1,109 @@
 <script lang="ts" setup>
+import CircularText from "./components/CircularText.vue"
+import FadeContent from "./components/FadeContent.vue"
+import SvgIcon from "@/components/svg-icon"
 import { ref } from "vue"
 import { showNotify } from "vant"
+import { copyText } from "@/utils/copy"
 
 // 编辑器 DOM 引用
 const editorRef = ref<HTMLDivElement | null>(null)
 
 // 自定义表情列表
-// 注意: 实际项目中请将表情图片放在 public 目录下或由 vite 处理
 const emojis = [
   {
-    name: "smile",
-    code: "<01>",
+    code: "<TXC00000000038490>",
     src: require("@/assets/images/heros/000000038490.png"),
-  }, // 示例表情
+  },
   {
-    name: "sad",
-    code: "<02>",
+    code: "<TXC00000000038491>",
     src: require("@/assets/images/heros/000000038491.png"),
-  }, // 示例表情
+  },
+  {
+    code: "<TXC00000000038492>",
+    src: require("@/assets/images/heros/000000038492.png"),
+  },
+  {
+    code: "<TXC00000000038493>",
+    src: require("@/assets/images/heros/000000038493.png"),
+  },
+  {
+    code: "<TXC00000000038494>",
+    src: require("@/assets/images/heros/000000038494.png"),
+  },
+  {
+    code: "<TXC00000000038495>",
+    src: require("@/assets/images/heros/000000038495.png"),
+  },
+  {
+    code: "<TXC00000000038497>",
+    src: require("@/assets/images/heros/000000038497.png"),
+  },
+  {
+    code: "<TXC00000000038498>",
+    src: require("@/assets/images/heros/000000038498.png"),
+  },
+  {
+    code: "<TXC00000000038499>",
+    src: require("@/assets/images/heros/000000038499.png"),
+  },
+  {
+    code: "<TXC0000000003849A>",
+    src: require("@/assets/images/heros/00000003849A.png"),
+  },
+  {
+    code: "<TXC0000000003849B>",
+    src: require("@/assets/images/heros/00000003849B.png"),
+  },
+  {
+    code: "<TXC0000000003849C>",
+    src: require("@/assets/images/heros/00000003849C.png"),
+  },
+  {
+    code: "<TXC0000000003849D>",
+    src: require("@/assets/images/heros/00000003849D.png"),
+  },
+  {
+    code: "<TXC0000000003849E>",
+    src: require("@/assets/images/heros/00000003849E.png"),
+  },
+  {
+    code: "<TXC0000000003849F>",
+    src: require("@/assets/images/heros/00000003849F.png"),
+  },
+  {
+    code: "<TXC000000000384A0>",
+    src: require("@/assets/images/heros/0000000384A0.png"),
+  },
+  {
+    code: "<TXC000000000384A1>",
+    src: require("@/assets/images/heros/0000000384A1.png"),
+  },
+  {
+    code: "<TXC000000000384A2>",
+    src: require("@/assets/images/heros/0000000384A2.png"),
+  },
+  {
+    code: "<TXC000000000384C2>",
+    src: require("@/assets/images/heros/0000000384C2.png"),
+  },
 ]
 
+const genColorCode = (color: string) => `<FG${color.replace("#", "")}FF>`
 // 预设颜色
-const colors = ["#ff0000", "#00ff00", "#0000ff", "#000000"]
+const colors = [
+  "#e11d48",
+  "#f472b6",
+  "#fb923c",
+  "#facc15",
+  "#84cc16",
+  "#10b981",
+  "#0ea5e9",
+  "#3b82f6",
+  "#8b5cf6",
+  "#a78bfa",
+  "#000000",
+]
 
 // 记录光标位置
 let lastSelection: Selection | null = null
@@ -156,7 +238,9 @@ const copyContent = async () => {
     }
 
     if (colorCode) {
-      span.replaceWith(document.createTextNode(`<${colorCode}>${textContent}`))
+      span.replaceWith(
+        document.createTextNode(`${genColorCode(colorCode)}${textContent}`),
+      )
     }
   })
 
@@ -179,42 +263,74 @@ const copyContent = async () => {
 </script>
 
 <template>
-  <div class="rich-input-container">
-    <!-- 表情选择栏 -->
-    <div class="emoji-bar">
-      <img
-        v-for="emoji in emojis"
-        :key="emoji.code"
-        :src="emoji.src"
-        :alt="emoji.name"
-        @click="insertEmoji(emoji)"
-        class="emoji"
-      />
-    </div>
-
-    <!-- 输入框 -->
-    <div
-      ref="editorRef"
-      contenteditable="plaintext-only"
-      class="editor"
-      @blur="saveSelection"
-      @mouseup="saveSelection"
-      @keyup="saveSelection"
-      @input="clearFont"
-    ></div>
-
-    <!-- 功能栏 -->
-    <div class="toolbar">
-      <div class="color-picker">
-        <button
-          v-for="color in colors"
-          :key="color"
-          :style="{ backgroundColor: color }"
-          class="color-swatch"
-          @click="applyColor(color)"
-        ></button>
+  <div class="w-100vw h-100vh overflow-y-auto flex-center bg-#f8f4f1">
+    <FadeContent
+      :blur="true"
+      :duration="400"
+      :delay="200"
+      :threshold="0.1"
+      :initial-opacity="0"
+      easing="ease-out"
+    >
+      <div>
+        <!-- 表情选择栏 -->
+        <div class="emoji-bar">
+          <img
+            v-for="emoji in emojis"
+            :key="emoji.code"
+            :src="emoji.src"
+            @click="insertEmoji(emoji)"
+            class="emoji"
+          />
+        </div>
+        <div class="rich-input-container">
+          <div class="rich-input-container-inner">
+            <!-- 输入框 -->
+            <div
+              ref="editorRef"
+              contenteditable="plaintext-only"
+              class="editor"
+              @blur="saveSelection"
+              @mouseup="saveSelection"
+              @keyup="saveSelection"
+              @input="clearFont"
+            ></div>
+          </div>
+          <!-- 功能栏 -->
+          <div class="toolbar">
+            <div class="color-picker">
+              <!-- 预设颜色 -->
+              <button
+                v-for="color in colors"
+                :key="color"
+                :style="{ backgroundColor: color }"
+                class="color-swatch"
+                @click="applyColor(color)"
+              ></button>
+              <!-- 自定义颜色 -->
+              <input
+                type="color"
+                @change="
+                  applyColor(($event.target as HTMLInputElement).value || '')
+                "
+                class="color-swatch-input"
+              />
+            </div>
+            <SvgIcon name="copy" @click="copyContent" class="copy-btn"
+              >复制</SvgIcon
+            >
+          </div>
+        </div>
       </div>
-      <button @click="copyContent" class="copy-btn">复制</button>
+    </FadeContent>
+
+    <div class="bottom-0 right-0 position-fixed">
+      <CircularText
+        text="by * 一坨猪 * overwatch * "
+        :spin-duration="20"
+        on-hover="speedUp"
+        @click="copyText('一坨猪#5358', '一坨猪#5358')"
+      />
     </div>
   </div>
 </template>
@@ -222,42 +338,62 @@ const copyContent = async () => {
 <style lang="scss" scoped>
 .rich-input-container {
   margin: auto;
+  padding: 0.375rem;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 28px;
   width: 50vw;
-  font-family: sans-serif;
+  box-shadow: rgb(0 0 0 / 6%) 0 42px 30px 0;
+  box-shadow: rgb(255 255 255) 0 0 0 1px inset;
+  box-shadow: var(--shadow-color-3);
+  font-family:
+    Ginto, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  transform: none;
+  transform-origin: 50% 50% 0;
+
+  .rich-input-container-inner {
+    overflow: hidden;
+    border-radius: 28px;
+  }
 }
 
 .emoji-bar {
+  margin-bottom: 10px;
   padding: 8px;
-  border-bottom: 1px solid #eee;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
-  background-color: #f8f8f8;
-}
 
-.emoji {
-  margin-right: 5px;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  transition: transform 0.2s;
+  .emoji {
+    margin-right: 5px;
+    border-radius: 999px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    transition: transform 0.2s;
 
-  &:hover {
-    transform: scale(1.2);
+    &:hover {
+      transform: scale(1.2);
+    }
   }
 }
 
 .editor {
-  padding: 10px;
+  overflow: auto;
+  padding: 0.6875rem 1rem;
   min-height: 120px;
+  max-height: 50vh;
   outline: none;
+  background-image: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 90%),
+    rgb(255 255 255 / 0%)
+  );
   line-height: 1.6;
   font-size: 16px;
 
   &:empty::before {
     cursor: text;
-    color: #aaa;
+    color: #746d68;
     content: "请输入内容...";
   }
 }
@@ -266,48 +402,88 @@ const copyContent = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  border-top: 1px solid #eee;
+  padding: 8px 10px;
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
-  background-color: #f8f8f8;
 }
 
 .color-picker {
   display: flex;
   gap: 5px;
+  flex-wrap: wrap;
 }
 
 .color-swatch {
   padding: 0;
-  border: 1px solid #ccc;
+  border-style: none;
   border-radius: 4px;
   width: 24px;
   height: 24px;
   cursor: pointer;
+  transition: transform 0.2s;
 
   &:hover {
-    border-color: #333;
+    transform: scale(1.2);
+  }
+
+  &:active {
+    border: 2px solid #ccc;
+  }
+}
+
+.color-swatch-input {
+  overflow: hidden;
+  margin-left: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  appearance: none;
+  background: none;
+  cursor: pointer;
+
+  &::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 4px;
+  }
+
+  &::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+  }
+
+  &::-moz-color-swatch {
+    border: none;
+    border-radius: 4px;
   }
 }
 
 .copy-btn {
-  padding: 6px 12px;
-  border: 1px solid #ddd;
   border-radius: 4px;
-  background-color: #fff;
+  width: 24px;
+  height: 24px;
   cursor: pointer;
-  font-size: 14px;
-
-  &:hover {
-    background-color: #f0f0f0;
-  }
 }
 
 /* 媒体查询如果是移动设备 */
 @media (width <= 700px) {
-  .rich-input-container {
+  .rich-input-container,
+  .emoji-bar {
     width: 90vw;
+  }
+
+  .toolbar {
+    display: block;
+    text-align: center;
+
+    .copy-btn {
+      margin-top: 20px;
+      border-radius: 4px;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+    }
   }
 }
 </style>

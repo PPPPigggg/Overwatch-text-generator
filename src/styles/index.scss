@@ -1,5 +1,5 @@
-@import "./theme/index";
-@import "./transition/index";
-@import "./reset";
-@import "./vant-reset";
-@import "./utils";
+@use "theme/index";
+@use "transition/index" as index2;
+@use "reset";
+@use "vant-reset";
+@use "utils";

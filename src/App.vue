@@ -20,13 +20,7 @@ const keepAliveComponents = computed(() => keepAliveStore.list)
 <template>
   <Layout>
     <router-view v-slot="{ Component }">
-      <template v-if="Component">
-        <transition :name="transitionName" mode="out-in" appear>
-          <keep-alive :include="keepAliveComponents">
-            <component :is="Component" :key="route.fullPath" />
-          </keep-alive>
-        </transition>
-      </template>
+      <component :is="Component" :key="route.fullPath" />
     </router-view>
   </Layout>
 </template>
