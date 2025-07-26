@@ -1,0 +1,146 @@
+kind: pipeline
+type: docker
+name: lhb-h5-test
+
+volumes: # 声明数据卷
+  - name: node_modules # 数据卷名称
+    # Host Volume, 挂载到宿主机上的卷轴
+    host:
+      # 宿主机的绝对路径
+      path: /home/ABServer/cache/node_modules
+  - name: targetDir
+    host:
+      path: /home/ABServer/webroot/lhb-h5-test
+  - name: shellDir
+    host:
+      path: /home/ABServer/config/shell
+  - name: configDir
+    host:
+      path: /home/ABServer/config/ossConfig
+
+clone:
+  disable: false # 启用代码拉取
+
+steps:
+  - name: build-project
+    image: srbarba/pnpm:next-node-hydrogen-slim
+    pull: if-not-exists
+    depends_on: [clone] # 依赖的步骤
+    resource_limits:
+      memory: 2g
+      cpus: 1
+    volumes: # 挂载数据卷
+      - name: node_modules # 数据卷名称
+        path: /drone/src/node_modules/ # 容器内目录 绝对路径
+      - name: targetDir
+        path: /drone/src/dist
+    commands: # 执行命令
+      - pwd # 查看当前目录
+      - npm cache clean --force
+      - npm config set strict-ssl false
+      - npm config set registry https://registry.npm.taobao.org # 切换淘宝镜像
+      - pnpm install --no-frozen-lockfile # 安装node_modules包
+      - npx update-browserslist-db@latest
+      # - npm install -g pnpm
+      - pnpm build # 执行编译
+    when:
+      status:
+        - success # 当前步骤成功时执行
+
+  - name: deploy-project
+    image: eclipse/alpine_jdk8
+    user: root
+    pull: if-not-exists
+    depends_on: [build-project] # 依赖的步骤
+    volumes: # 挂载数据卷
+      - name: targetDir
+        path: /dist
+      - name: shellDir
+        path: /config/shell
+      - name: configDir
+        path: /root
+    commands: # 执行命令
+      - chmod +x /config/shell/install.sh | /config/shell/install.sh
+      - ossutil
+      - ossutil64 cp -rf /dist oss://laihaoba-h5-test/
+
+trigger:
+  branch:
+    include:
+      - release-test
+  event:
+    include:
+      - pull_request
+      - push
+
+---
+kind: pipeline
+type: docker
+name: lhb-admin-pro
+
+volumes: # 声明数据卷
+  - name: node_modules # 数据卷名称
+    # Host Volume, 挂载到宿主机上的卷轴
+    host:
+      # 宿主机的绝对路径
+      path: /home/ABServer/cache/node_modules
+  - name: targetDir
+    host:
+      path: /home/ABServer/webroot/lhb-h5
+  - name: shellDir
+    host:
+      path: /home/ABServer/config/shell
+  - name: configDir
+    host:
+      path: /home/ABServer/config/ossConfig
+
+clone:
+  disable: false # 启用代码拉取
+
+steps:
+  - name: build-project
+    image: srbarba/pnpm:next-node-hydrogen-slim
+    pull: if-not-exists
+    depends_on: [clone] # 依赖的步骤
+    volumes: # 挂载数据卷
+      - name: node_modules # 数据卷名称
+        path: /drone/src/node_modules/ # 容器内目录 绝对路径
+      - name: targetDir
+        path: /drone/src/dist
+    commands: # 执行命令
+      - pwd # 查看当前目录
+      - npm cache clean --force
+      - npm config set strict-ssl false
+      - npm config set registry https://registry.npm.taobao.org # 切换淘宝镜像
+      # - npm install -g pnpm
+      - pnpm install --no-frozen-lockfile # 安装node_modules包
+      - pnpm build # 执行编译
+    when:
+      status:
+        - success # 当前步骤成功时执行
+
+  - name: deploy-project
+    image: eclipse/alpine_jdk8
+    user: root
+    pull: if-not-exists
+    depends_on: [build-project] # 依赖的步骤
+    volumes: # 挂载数据卷
+      - name: targetDir
+        path: /dist
+      - name: shellDir
+        path: /config/shell
+      - name: configDir
+        path: /root
+    commands: # 执行命令
+      - chmod +x /config/shell/install.sh | /config/shell/install.sh
+      - ossutil
+      - ossutil64 cp -rf /dist oss://laihaoba-h5/
+
+trigger:
+  branch:
+    include:
+      - release-pro
+  event:
+    include:
+      - pull_request
+      - push

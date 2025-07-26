@@ -1,0 +1,421 @@
+body {
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--fill-color-2);
+  font-size: 16px;
+  color: var(--text-color-2);
+
+  #app {
+    overflow-y: auto;
+    flex: 1;
+  }
+}
+
+// 隐藏滚动条
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  -webkit-overflow-scrolling: touch;
+  -overflow-scrolling: touch;
+}
+
+a {
+  text-decoration: none;
+  font-size: 14px;
+  color: #333;
+}
+
+/* 修改 placeholder颜色 */
+input::placeholder {
+  color: #999;
+}
+
+/* 去除ie edge的密码框默认出现的小眼睛 */
+input[type="password"]::-ms-reveal {
+  display: none;
+}
+
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+input[type="password"]::-o-clear {
+  display: none;
+}
+
+/* 文档
+* ========================================================================== */
+
+/**
+* 1。在所有浏览器中添加边框框大小 (自以为是)。
+* 2。背景不重复默认情况下 。
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  background-repeat: no-repeat; /* 2 */
+}
+
+/**
+* 1。在所有浏览器中添加文本修饰继承 。
+* 2。在所有浏览器中添加垂直对齐继承 。
+*/
+
+::before,
+::after {
+  vertical-align: inherit; /* 2 */
+  text-decoration: inherit; /* 1 */
+}
+
+/**
+* 1。在所有浏览器中使用默认光标 (自以为是)。
+* 2。更改所有浏览器中的行高 (自以为是)。
+* 3。打破的话，以防止溢出在所有浏览器 。
+* 4。在所有浏览器中使用4个空格的制表符宽度 (自以为是)。
+* 5.删除iOS链接上的灰色突出显示 。
+* 6。防止在iOS中更改方向后调整字体大小。
+*/
+
+:where(:root) {
+  cursor: default; /* 1 */
+  line-height: 1.5; /* 2 */
+  text-size-adjust: 100%; /* 6 */ /* 4 */
+  tab-size: 4; /* 4 */
+  overflow-wrap: break-word; /* 3 */
+  -webkit-tap-highlight-color: transparent; /* 5 */
+}
+
+/* 截面图
+* ========================================================================== */
+
+/**
+* 删除所有浏览器中的边距 (自以为是)。
+*/
+
+:where(body) {
+  margin: 0;
+}
+
+/**
+* 更正 “section” 和 “section” 中 “h1” 元素的字体大小和边距
+* Chrome、Edge、Firefox和Safari中的 “文章” 上下文。
+*/
+
+:where(h1) {
+  margin: 0.67em 0;
+  font-size: 2em;
+}
+
+/* 分组内容
+* ========================================================================== */
+
+/**
+* 在Chrome，Edge和Safari中删除嵌套列表上的边距。
+*/
+
+:where(dl, ol, ul) :where(dl, ol, ul) {
+  margin: 0;
+}
+
+/**
+* 1。更正Firefox中边框颜色的继承
+* 2。在Firefox中添加正确的框大小。
+*/
+
+:where(hr) {
+  height: 0; /* 2 */
+  color: inherit; /* 1 */
+}
+
+/**
+* 在所有浏览器的导航列表中删除列表样式 。
+*/
+
+:where(nav) :where(ol, ul) {
+  list-style-type: none;
+  padding: 0;
+}
+
+/**
+* 防止旁白忽略Safari中的列表语义 。
+*/
+
+:where(nav li)::before {
+  float: left;
+  content: "\200B";
+}
+
+/**
+* 1。在所有浏览器中更正字体大小的继承和缩放。
+* 2。在所有浏览器中纠正奇怪的 'em' 字体大小。
+* 3。防止容器在所有浏览器中溢出 (自以为是)。
+*/
+
+:where(pre) {
+  overflow: auto; /* 3 */
+  /* stylelint-disable-next-line font-family-no-duplicate-names */
+  font-family: monospace, monospace; /* 1 */
+  font-size: 1em; /* 2 */
+}
+
+/* 文本级语义
+* ========================================================================== */
+
+/**
+* 在Safari中添加正确的文本装饰。
+*/
+
+:where(abbr[title]) {
+  text-decoration: underline;
+  text-decoration: underline dotted;
+}
+
+/**
+* 在Chrome、Edge和Safari中添加正确的字体粗细。
+*/
+
+:where(b, strong) {
+  font-weight: bolder;
+}
+
+/**
+* 1。在所有浏览器中更正字体大小的继承和缩放。
+* 2。在所有浏览器中纠正奇怪的 'em' 字体大小。
+*/
+
+:where(code, kbd, samp) {
+  /* stylelint-disable-next-line font-family-no-duplicate-names */
+  font-family: monospace, monospace; /* 1 */
+  font-size: 1em; /* 2 */
+}
+
+/**
+* 在所有浏览器中添加正确的字体大小。
+*/
+
+:where(small) {
+  font-size: 80%;
+}
+
+/* 嵌入内容
+* ========================================================================== */
+
+/*
+* 在所有浏览器中更改媒体元素的对齐方式 。
+*/
+
+:where(audio, canvas, iframe, img, svg, video) {
+  vertical-align: middle;
+}
+
+/**
+* 在所有浏览器中删除iframe的边框 。
+*/
+
+:where(iframe) {
+  border-style: none;
+}
+
+/**
+* 更改填充颜色以匹配所有浏览器中的文本颜色 。
+*/
+
+:where(svg:not([fill])) {
+  fill: currentcolor;
+}
+
+/* 表格数据
+* ========================================================================== */
+
+/**
+* 1。折叠所有浏览器中的边框间距 (自以为是)。
+* 2。在所有Chrome，Edge和Safari中正确的表格边框颜色继承。
+* 3。在Chrome、Edge和Safari中删除表格内容中的文本缩进。
+*/
+
+:where(table) {
+  border-collapse: collapse; /* 1 */
+  border-color: inherit; /* 2 */
+  text-indent: 0; /* 3 */
+}
+
+/* 表格
+* ========================================================================== */
+
+/**
+* 删除Safari中控件的边距。
+*/
+
+:where(button, input, select) {
+  margin: 0;
+}
+
+/**
+* 纠正无法在iOS和Safari中设置按钮样式的问题。
+*/
+
+:where(button, [type="button" i], [type="reset" i], [type="submit" i]) {
+  appearance: auto;
+}
+
+/**
+* 改变不一致的外观在所有浏览器 。
+*/
+
+:where(fieldset) {
+  border: 1px solid #a0a0a0;
+}
+
+/**
+* 在Chrome，Edge和Firefox中添加正确的垂直对齐方式。
+*/
+
+:where(progress) {
+  vertical-align: baseline;
+}
+
+/**
+* 1。删除Firefox和Safari中的边距。
+* 3。在所有浏览器中更改调整大小方向 (自以为是)。
+*/
+
+:where(textarea) {
+  margin: 0; /* 1 */
+  resize: vertical; /* 3 */
+}
+
+/**
+* 1。纠正Chrome、Edge和Safari中的奇怪外观。
+* 2。在Safari中更正大纲样式。
+*/
+
+:where([type="search" i]) {
+  appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/**
+* 纠正Safari中递增和递减按钮的光标样式。
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/**
+* 在Chrome，Edge和Safari中更正占位符的文本样式。
+*/
+
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+::input-placeholder {
+  opacity: 0.54;
+  color: inherit;
+}
+
+/**
+* 在macOS上的Chrome，Edge和Safari中删除内部填充。
+*/
+
+::-webkit-search-decoration {
+  appearance: none;
+}
+
+/**
+* 1。纠正无法在iOS和Safari中设置上传按钮样式的问题。
+* 2。在Safari中将字体属性更改为 “继承”。
+*/
+
+::-webkit-file-upload-button {
+  appearance: auto; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/* 交互式
+* ========================================================================== */
+
+/*
+* 在Safari中添加正确的样式。
+*/
+
+:where(dialog) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: auto;
+  padding: 1em;
+  border: solid;
+  width: fit-content;
+  height: fit-content;
+  background-color: white;
+  color: black;
+}
+
+:where(dialog:not([open])) {
+  display: none;
+}
+
+/*
+* 在Safari中添加正确的显示。
+*/
+
+:where(details > summary:first-of-type) {
+  display: list-item;
+}
+
+/* 可访问性
+* ========================================================================== */
+
+/**
+* 改变光标在繁忙的元素在所有浏览器 。
+*/
+
+:where([aria-busy="true" i]) {
+  cursor: progress;
+}
+
+/*
+* 在所有浏览器中更改控制元素上的光标 。
+*/
+
+:where([aria-controls]) {
+  cursor: pointer;
+}
+
+/*
+* 更改光标在禁用，不可编辑，或以其他方式
+* 在所有浏览器中不可操作的元素 (自以为是)。
+*/
+
+:where([aria-disabled="true" i], [disabled]) {
+  cursor: not-allowed;
+}
+
+/*
+* 更改在视觉上隐藏的可访问元素的显示
+* 在所有浏览器 。
+*/
+
+:where([aria-hidden="false" i][hidden]) {
+  display: initial;
+}
+
+:where([aria-hidden="false" i][hidden]:not(:focus)) {
+  position: absolute;
+  clip: rect(0, 0, 0, 0);
+}
+
+/**
+* 限制大小的页面宽度在所有浏览器 。
+*/
+
+:where(iframe, img, input, video, select, textarea) {
+  max-width: 100%;
+  height: auto;
+}

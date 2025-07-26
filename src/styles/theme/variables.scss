@@ -1,0 +1,36 @@
+:root {
+  // 颜色
+  --base-primary: #2c66a5;
+  --base-success: #00b42a;
+  --base-warning: #ff7d00;
+  --base-danger: #f53f3f;
+
+  // 文字颜色
+  --text-color-1: #1d2129;
+  --text-color-2: #3a3a3a;
+  --text-color-3: #909399;
+  --text-color-4: #c9cdd4;
+
+  // 边框颜色
+  --border-color-1: #f2f3f5;
+  --border-color-2: #e5e6eb;
+  --border-color-3: #c9cdd4;
+  --border-color-4: #909399;
+
+  // 阴影
+  --shadow-color-1: 0 1px 4px 0 rgb(153 153 153 / 10%);
+  --shadow-color-2: 0 0 10px rgb(0 0 0 / 10%);
+  --shadow-color-3: 0 0 20px rgb(0 0 0 / 10%);
+  --shadow-color-4:
+    0px 12px 32px 4px rgb(0 0 0 / 4%), 0px 8px 20px rgb(0 0 0 / 8%);
+
+  // 填充色
+  --fill-color-1: #f9f9f9;
+  --fill-color-2: #f2f3f5;
+  --fill-color-3: #e5e6eb;
+  --fill-color-4: #c9cdd4;
+
+  // 尺寸
+  --header-height: 50px;
+  --footer-height: 70px;
+}
