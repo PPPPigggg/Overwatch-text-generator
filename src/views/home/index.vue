@@ -247,7 +247,7 @@ const copyContent = async () => {
   const resultText = contentClone.textContent || ""
 
   try {
-    await navigator.clipboard.writeText(resultText)
+    copyText(resultText, resultText)
 
     showNotify({
       type: "success",
@@ -491,7 +491,10 @@ const clearContent = () => {
     display: block;
     text-align: center;
 
-    .copy-btn {
+    .copy-btn,
+    .clear-btn {
+      margin-left: 10px;
+      margin-right: 10px;
       margin-top: 20px;
       border-radius: 4px;
       width: 34px;
