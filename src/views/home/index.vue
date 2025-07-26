@@ -9,82 +9,83 @@ import { copyText } from "@/utils/copy"
 // 编辑器 DOM 引用
 const editorRef = ref<HTMLDivElement | null>(null)
 
+const genEmojisCode = (code: string) => `<TXC00${code}>`
 // 自定义表情列表
 const emojis = [
   {
-    code: "<TXC00000000038490>",
+    code: "000000038490",
     src: require("@/assets/images/heros/000000038490.png"),
   },
   {
-    code: "<TXC00000000038491>",
+    code: "000000038491",
     src: require("@/assets/images/heros/000000038491.png"),
   },
   {
-    code: "<TXC00000000038492>",
+    code: "000000038492",
     src: require("@/assets/images/heros/000000038492.png"),
   },
   {
-    code: "<TXC00000000038493>",
+    code: "000000038493",
     src: require("@/assets/images/heros/000000038493.png"),
   },
   {
-    code: "<TXC00000000038494>",
+    code: "000000038494",
     src: require("@/assets/images/heros/000000038494.png"),
   },
   {
-    code: "<TXC00000000038495>",
+    code: "000000038495",
     src: require("@/assets/images/heros/000000038495.png"),
   },
   {
-    code: "<TXC00000000038497>",
+    code: "000000038497",
     src: require("@/assets/images/heros/000000038497.png"),
   },
   {
-    code: "<TXC00000000038498>",
+    code: "000000038498",
     src: require("@/assets/images/heros/000000038498.png"),
   },
   {
-    code: "<TXC00000000038499>",
+    code: "000000038499",
     src: require("@/assets/images/heros/000000038499.png"),
   },
   {
-    code: "<TXC0000000003849A>",
+    code: "00000003849A",
     src: require("@/assets/images/heros/00000003849A.png"),
   },
   {
-    code: "<TXC0000000003849B>",
+    code: "00000003849B",
     src: require("@/assets/images/heros/00000003849B.png"),
   },
   {
-    code: "<TXC0000000003849C>",
+    code: "00000003849C",
     src: require("@/assets/images/heros/00000003849C.png"),
   },
   {
-    code: "<TXC0000000003849D>",
+    code: "00000003849D",
     src: require("@/assets/images/heros/00000003849D.png"),
   },
   {
-    code: "<TXC0000000003849E>",
+    code: "00000003849E",
     src: require("@/assets/images/heros/00000003849E.png"),
   },
   {
-    code: "<TXC0000000003849F>",
+    code: "00000003849F",
     src: require("@/assets/images/heros/00000003849F.png"),
   },
   {
-    code: "<TXC000000000384A0>",
+    code: "0000000384A0",
     src: require("@/assets/images/heros/0000000384A0.png"),
   },
   {
-    code: "<TXC000000000384A1>",
+    code: "0000000384A1",
     src: require("@/assets/images/heros/0000000384A1.png"),
   },
   {
-    code: "<TXC000000000384A2>",
+    code: "0000000384A2",
     src: require("@/assets/images/heros/0000000384A2.png"),
   },
   {
-    code: "<TXC000000000384C2>",
+    code: "0000000384C2",
     src: require("@/assets/images/heros/0000000384C2.png"),
   },
 ]
@@ -118,7 +119,7 @@ const saveSelection = () => {
 const insertEmoji = (emoji: { code: string; src: string }) => {
   editorRef.value?.focus()
 
-  const selection = window.getSelection()
+  const renderEl = document.createDocumentFragment()
 
   const img = document.createElement("img")
   img.src = emoji.src
@@ -127,17 +128,8 @@ const insertEmoji = (emoji: { code: string; src: string }) => {
   img.style.height = "20px"
   img.style.verticalAlign = "middle"
 
-  if (lastSelection && lastSelection.rangeCount > 0) {
-    // selection?.removeAllRanges()
-    const lastRange = lastSelection.getRangeAt(0)
-    lastRange.insertNode(img)
-    // 重新设置光标位置
-    lastRange.setStartAfter(img)
-    lastRange.collapse(true)
-    selection?.removeAllRanges()
-    selection?.addRange(lastRange)
-  }
-
+  renderEl.appendChild(img)
+  insertNodeAtCursor(renderEl)
   saveSelection()
 }
 
@@ -159,7 +151,7 @@ const applyColor = (color: string) => {
             span.style.color = color
             span.textContent = char
 
-            span.dataset.colorCode = color // 添加自定义属性以便后续处理
+            span.dataset.colorCode = color // 添加scaqewd自定义属性以便后续处理
             spans.appendChild(span)
           })
           renderEl.appendChild(spans)
@@ -182,6 +174,30 @@ const applyColor = (color: string) => {
   }
 }
 
+// 编辑框输入事件
+const handleInput = (e: InputEvent) => {
+  const target = e.target as HTMLElement
+  // 清除 font 标签
+  clearFont(e)
+
+  // 获取所有 span 标签
+  const spans = target.querySelectorAll("span[data-color-code]")
+  if (spans.length > 0) {
+    spans.forEach((span) => {
+      const colorCode = (span as HTMLElement).dataset.colorCode || ""
+      if (colorCode) {
+        span.innerHTML = wrapSpan(span.textContent || "", colorCode)
+      }
+    })
+  }
+}
+
+// 包装span标签
+const wrapSpan = (text: string, color: string): string => {
+  if (!color) return text
+  return `<span style="color:${color}" data-color-code="${color}">${text}</span>`
+}
+// 清除 font 标签
 const clearFont = (e: InputEvent) => {
   const target = e.target as HTMLElement
   Array.from(target.querySelectorAll("font")).forEach((font) => {
@@ -199,19 +215,35 @@ const clearFont = (e: InputEvent) => {
 const copyContent = async () => {
   if (!editorRef.value) return
 
-  const contentClone = editorRef.value.cloneNode(true) as HTMLElement
+  const contentClone = document.createDocumentFragment()
+  contentClone.appendChild(editorRef.value.cloneNode(true))
+  const resultText = nodeToContent(contentClone)
 
+  try {
+    copyText(resultText, resultText)
+
+    showNotify({
+      type: "success",
+      message: "内容已复制到剪贴板",
+    })
+  } catch (err) {
+    showNotify({
+      type: "danger",
+      message: "复制失败，未知原因",
+    })
+  }
+}
+
+function nodeToContent(node: DocumentFragment): string {
   // 将表情图片替换为代码
-  contentClone.querySelectorAll("img[data-emoji-code]").forEach((img) => {
+  node.querySelectorAll("img[data-emoji-code]").forEach((img) => {
     const code = (img as HTMLElement).dataset.emojiCode
     if (code) {
-      img.replaceWith(document.createTextNode(code))
+      img.replaceWith(document.createTextNode(genEmojisCode(code)))
     }
   })
 
-  // 将颜色标签 <font color="..."> 替换为自定义格式 <ff0000>...
-
-  const colorSpans = contentClone.querySelectorAll("span[data-color-code]")
+  const colorSpans = node.querySelectorAll("span[data-color-code]")
 
   colorSpans.forEach((span, index) => {
     const prevColorCode =
@@ -237,21 +269,162 @@ const copyContent = async () => {
     }
   })
 
-  const resultText = contentClone.textContent || ""
+  return node.textContent || ""
+}
 
-  try {
-    copyText(resultText, resultText)
-
-    showNotify({
-      type: "success",
-      message: "内容已复制到剪贴板",
+function appendTextWithColor(
+  fragment: DocumentFragment,
+  text: string,
+  color: string,
+) {
+  if (color) {
+    // 为每个字符创建带颜色的span
+    Array.from(text).forEach((char) => {
+      const span = document.createElement("span")
+      span.style.color = color
+      span.dataset.colorCode = color
+      span.textContent = char
+      fragment.appendChild(span)
     })
-  } catch (err) {
-    showNotify({
-      type: "danger",
-      message: "复制失败，未知原因",
-    })
+  } else {
+    fragment.appendChild(document.createTextNode(text))
   }
+}
+
+function contentToNode(textContent: string): DocumentFragment {
+  const fragment = document.createDocumentFragment()
+  let currentIndex = 0
+  let currentColor = ""
+
+  // 匹配表情和颜色代码
+  const formatPattern = /(<TXC[0-9A-Fa-f]+>|<FG([0-9A-Fa-f]{6})FF>)/g
+  let match
+
+  while ((match = formatPattern.exec(textContent)) !== null) {
+    // 添加匹配前的文本
+    const beforeText = textContent.substring(currentIndex, match.index)
+    if (beforeText) {
+      appendTextWithColor(fragment, beforeText, currentColor)
+    }
+
+    const fullMatch = match[1]
+    if (fullMatch.startsWith("<TXC")) {
+      // 处理表情
+      const emoji = emojis.find((e) => genEmojisCode(e.code) === fullMatch)
+      if (emoji) {
+        const img = document.createElement("img")
+        img.src = emoji.src
+        img.dataset.emojiCode = emoji.code
+        img.style.width = "20px"
+        img.style.height = "20px"
+        img.style.verticalAlign = "middle"
+        fragment.appendChild(img)
+      }
+    } else if (fullMatch.startsWith("<FG")) {
+      // 处理颜色代码
+      const colorHex = match[2]
+      currentColor = `#${colorHex}`
+    }
+
+    currentIndex = formatPattern.lastIndex
+  }
+
+  // 添加剩余的文本
+  const remainingText = textContent.substring(currentIndex)
+  if (remainingText) {
+    appendTextWithColor(fragment, remainingText, currentColor)
+  }
+  return fragment
+}
+
+// 处理复制事件
+const handleCopy = (e: ClipboardEvent) => {
+  e.stopPropagation()
+  const selection = window.getSelection()
+
+  if (!(selection && selection.rangeCount > 0)) return
+
+  const range = selection.getRangeAt(0)
+  if (range.collapsed) return
+
+  const contents = range.cloneContents()
+
+  const resultText = nodeToContent(contents)
+
+  copyText(resultText, null)
+  showNotify({
+    type: "success",
+    message: "内容已复制到剪贴板",
+  })
+}
+
+// 处理剪切事件
+const handleCut = (e: ClipboardEvent) => {
+  // 先复制内容
+  handleCopy(e)
+
+  // 然后删除选中的内容
+  const selection = window.getSelection()
+  if (selection && selection.rangeCount > 0) {
+    selection.deleteFromDocument()
+    saveSelection()
+  }
+}
+
+// 处理粘贴事件
+const handlePaste = (e: ClipboardEvent) => {
+  e.preventDefault()
+
+  const selection = window.getSelection()
+
+  if (!(selection && selection.rangeCount > 0)) return
+
+  const range = selection.getRangeAt(0)
+
+  const clipboardData = e.clipboardData
+  if (!clipboardData) return
+
+  // 获取纯文本内容
+  const textData = clipboardData.getData("text/plain")
+
+  const fragment = contentToNode(textData)
+  if (fragment.childNodes.length > 0) {
+    range.deleteContents() // 删除选中的内容
+    range.insertNode(fragment) // 插入新的内容
+
+    // 将光标移动到插入内容的末尾
+    if (fragment.lastChild) {
+      range.setStartAfter(fragment.lastChild as Node)
+    }
+
+    range.collapse(true)
+
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    saveSelection()
+  }
+}
+
+// 在光标位置插入节点
+const insertNodeAtCursor = (node: DocumentFragment) => {
+  const selection = window.getSelection()
+  if (selection && selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0)
+    range.deleteContents()
+    range.insertNode(node)
+
+    // 将光标移动到插入内容的末尾
+    range.setStartAfter(node)
+    range.collapse(true)
+    selection.removeAllRanges()
+    selection.addRange(range)
+  } else if (editorRef.value) {
+    // 如果没有选区，插入到编辑器末尾
+    editorRef.value.appendChild(node)
+  }
+
+  saveSelection()
 }
 
 // 清空内容
@@ -295,6 +468,9 @@ const clearContent = () => {
               @mouseup="saveSelection"
               @keyup="saveSelection"
               @input="clearFont"
+              @paste="handlePaste"
+              @copy="handleCopy"
+              @cut="handleCut"
             ></div>
           </div>
           <!-- 功能栏 -->
