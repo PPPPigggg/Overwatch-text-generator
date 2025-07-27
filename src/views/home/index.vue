@@ -5,90 +5,22 @@ import SvgIcon from "@/components/svg-icon"
 import { ref } from "vue"
 import { showNotify } from "vant"
 import { copyText } from "@/utils/copy"
+import { useFetch } from "@vueuse/core"
+
+interface IEmojiItem {
+  id: string
+  url: string
+  isTop?: number
+  classify?: string
+  name?: string
+}
+
+const { data: emojis } = useFetch("./textures.json").json<IEmojiItem[]>()
 
 // 编辑器 DOM 引用
 const editorRef = ref<HTMLDivElement | null>(null)
 
 const genEmojisCode = (code: string) => `<TXC00${code}>`
-// 自定义表情列表
-const emojis = [
-  {
-    code: "000000038490",
-    src: require("@/assets/images/heros/000000038490.png"),
-  },
-  {
-    code: "000000038491",
-    src: require("@/assets/images/heros/000000038491.png"),
-  },
-  {
-    code: "000000038492",
-    src: require("@/assets/images/heros/000000038492.png"),
-  },
-  {
-    code: "000000038493",
-    src: require("@/assets/images/heros/000000038493.png"),
-  },
-  {
-    code: "000000038494",
-    src: require("@/assets/images/heros/000000038494.png"),
-  },
-  {
-    code: "000000038495",
-    src: require("@/assets/images/heros/000000038495.png"),
-  },
-  {
-    code: "000000038497",
-    src: require("@/assets/images/heros/000000038497.png"),
-  },
-  {
-    code: "000000038498",
-    src: require("@/assets/images/heros/000000038498.png"),
-  },
-  {
-    code: "000000038499",
-    src: require("@/assets/images/heros/000000038499.png"),
-  },
-  {
-    code: "00000003849A",
-    src: require("@/assets/images/heros/00000003849A.png"),
-  },
-  {
-    code: "00000003849B",
-    src: require("@/assets/images/heros/00000003849B.png"),
-  },
-  {
-    code: "00000003849C",
-    src: require("@/assets/images/heros/00000003849C.png"),
-  },
-  {
-    code: "00000003849D",
-    src: require("@/assets/images/heros/00000003849D.png"),
-  },
-  {
-    code: "00000003849E",
-    src: require("@/assets/images/heros/00000003849E.png"),
-  },
-  {
-    code: "00000003849F",
-    src: require("@/assets/images/heros/00000003849F.png"),
-  },
-  {
-    code: "0000000384A0",
-    src: require("@/assets/images/heros/0000000384A0.png"),
-  },
-  {
-    code: "0000000384A1",
-    src: require("@/assets/images/heros/0000000384A1.png"),
-  },
-  {
-    code: "0000000384A2",
-    src: require("@/assets/images/heros/0000000384A2.png"),
-  },
-  {
-    code: "0000000384C2",
-    src: require("@/assets/images/heros/0000000384C2.png"),
-  },
-]
 
 const genColorCode = (color: string) => `<FG${color.replace("#", "")}FF>`
 // 预设颜色
@@ -106,35 +38,21 @@ const colors = [
   "#000000",
 ]
 
-// 记录光标位置
-let lastSelection: Selection | null = null
-const saveSelection = () => {
-  const selection = window.getSelection()
-  if (selection && selection.rangeCount > 0) {
-    lastSelection = selection
-  }
-}
-
 // 插入表情
-const insertEmoji = (emoji: { code: string; src: string }) => {
+const insertEmoji = (emoji: IEmojiItem) => {
   editorRef.value?.focus()
 
   const renderEl = document.createDocumentFragment()
 
   const img = document.createElement("img")
-  img.src = emoji.src
-  img.dataset.emojiCode = emoji.code // 使用 data-* 属性存储代码
-  img.style.width = "20px"
-  img.style.height = "20px"
-  img.style.verticalAlign = "middle"
+  img.src = emoji.url
+  img.dataset.emojiCode = emoji.id // 使用 data-* 属性存储代码
 
   renderEl.appendChild(img)
   insertNodeAtCursor(renderEl)
-  saveSelection()
 }
 
 const applyColor = (color: string) => {
-  editorRef.value?.focus()
   const selection = window.getSelection()
   if (selection && selection.rangeCount > 0) {
     const range = selection.getRangeAt(0)
@@ -147,12 +65,7 @@ const applyColor = (color: string) => {
         if (childEl.nodeType !== 1) {
           const spans = document.createDocumentFragment()
           Array.from((childEl as Text).textContent || "").forEach((char) => {
-            const span = document.createElement("span")
-            span.style.color = color
-            span.textContent = char
-
-            span.dataset.colorCode = color // 添加scaqewd自定义属性以便后续处理
-            spans.appendChild(span)
+            spans.appendChild(wrapSpan(char, color))
           })
           renderEl.appendChild(spans)
         } else if (childEl.nodeName === "SPAN") {
@@ -167,7 +80,7 @@ const applyColor = (color: string) => {
 
       range.insertNode(renderEl)
 
-      range.collapse(false)
+      range.collapse()
       selection.removeAllRanges()
       selection.addRange(range)
     }
@@ -176,26 +89,18 @@ const applyColor = (color: string) => {
 
 // 编辑框输入事件
 const handleInput = (e: InputEvent) => {
-  const target = e.target as HTMLElement
   // 清除 font 标签
   clearFont(e)
-
-  // 获取所有 span 标签
-  const spans = target.querySelectorAll("span[data-color-code]")
-  if (spans.length > 0) {
-    spans.forEach((span) => {
-      const colorCode = (span as HTMLElement).dataset.colorCode || ""
-      if (colorCode) {
-        span.innerHTML = wrapSpan(span.textContent || "", colorCode)
-      }
-    })
-  }
 }
 
 // 包装span标签
-const wrapSpan = (text: string, color: string): string => {
-  if (!color) return text
-  return `<span style="color:${color}" data-color-code="${color}">${text}</span>`
+const wrapSpan = (text: string, color: string = "#000000") => {
+  const span = document.createElement("span")
+  span.style.color = color
+  span.textContent = text
+
+  span.dataset.colorCode = color
+  return span
 }
 // 清除 font 标签
 const clearFont = (e: InputEvent) => {
@@ -235,6 +140,32 @@ const copyContent = async () => {
 }
 
 function nodeToContent(node: DocumentFragment): string {
+  const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, {
+    acceptNode: function (textNode) {
+      const parent = textNode.parentNode as HTMLElement
+
+      if (!parent || parent.tagName !== "SPAN") {
+        if (textNode.textContent?.trim()) {
+          return NodeFilter.FILTER_ACCEPT
+        }
+      }
+      return NodeFilter.FILTER_REJECT
+    },
+  })
+  const textNodesToWrap: Node[] = []
+  let textNode: Node | null
+  while ((textNode = walker.nextNode())) {
+    textNodesToWrap.push(textNode)
+  }
+
+  // 包裹每个文本节点
+  textNodesToWrap.forEach((textNode) => {
+    textNode.parentNode?.replaceChild(
+      wrapSpan(textNode.textContent || ""),
+      textNode,
+    )
+  })
+
   // 将表情图片替换为代码
   node.querySelectorAll("img[data-emoji-code]").forEach((img) => {
     const code = (img as HTMLElement).dataset.emojiCode
@@ -310,11 +241,11 @@ function contentToNode(textContent: string): DocumentFragment {
     const fullMatch = match[1]
     if (fullMatch.startsWith("<TXC")) {
       // 处理表情
-      const emoji = emojis.find((e) => genEmojisCode(e.code) === fullMatch)
+      const emoji = emojis.value?.find((e) => genEmojisCode(e.id) === fullMatch)
       if (emoji) {
         const img = document.createElement("img")
-        img.src = emoji.src
-        img.dataset.emojiCode = emoji.code
+        img.src = emoji.url
+        img.dataset.emojiCode = emoji.id
         img.style.width = "20px"
         img.style.height = "20px"
         img.style.verticalAlign = "middle"
@@ -360,14 +291,11 @@ const handleCopy = (e: ClipboardEvent) => {
 
 // 处理剪切事件
 const handleCut = (e: ClipboardEvent) => {
-  // 先复制内容
   handleCopy(e)
 
-  // 然后删除选中的内容
   const selection = window.getSelection()
   if (selection && selection.rangeCount > 0) {
     selection.deleteFromDocument()
-    saveSelection()
   }
 }
 
@@ -392,17 +320,10 @@ const handlePaste = (e: ClipboardEvent) => {
     range.deleteContents() // 删除选中的内容
     range.insertNode(fragment) // 插入新的内容
 
-    // 将光标移动到插入内容的末尾
-    if (fragment.lastChild) {
-      range.setStartAfter(fragment.lastChild as Node)
-    }
-
-    range.collapse(true)
+    range.collapse()
 
     selection.removeAllRanges()
     selection.addRange(range)
-
-    saveSelection()
   }
 }
 
@@ -414,24 +335,19 @@ const insertNodeAtCursor = (node: DocumentFragment) => {
     range.deleteContents()
     range.insertNode(node)
 
-    // 将光标移动到插入内容的末尾
-    range.setStartAfter(node)
-    range.collapse(true)
+    range.collapse()
     selection.removeAllRanges()
     selection.addRange(range)
   } else if (editorRef.value) {
     // 如果没有选区，插入到编辑器末尾
     editorRef.value.appendChild(node)
   }
-
-  saveSelection()
 }
 
 // 清空内容
 const clearContent = () => {
   if (editorRef.value) {
     editorRef.value.innerHTML = ""
-    saveSelection()
   }
 }
 </script>
@@ -450,9 +366,10 @@ const clearContent = () => {
         <!-- 表情选择栏 -->
         <div class="emoji-bar">
           <img
-            v-for="emoji in emojis"
-            :key="emoji.code"
-            :src="emoji.src"
+            v-for="emoji in emojis?.filter((e) => e.isTop) || []"
+            :key="emoji.id"
+            :src="emoji.url"
+            :alt="emoji.name"
             @click="insertEmoji(emoji)"
             class="emoji"
           />
@@ -462,12 +379,9 @@ const clearContent = () => {
             <!-- 输入框 -->
             <div
               ref="editorRef"
-              contenteditable="plaintext-only"
+              contenteditable="true"
               class="editor"
-              @blur="saveSelection"
-              @mouseup="saveSelection"
-              @keyup="saveSelection"
-              @input="clearFont"
+              @input="handleInput"
               @paste="handlePaste"
               @copy="handleCopy"
               @cut="handleCut"
@@ -518,7 +432,8 @@ const clearContent = () => {
 </template>
 
 <style lang="scss" scoped>
-.rich-input-container {
+.rich-input-container,
+.emoji-bar {
   margin: auto;
   padding: 0.375rem;
   border: 1px solid #ccc;
@@ -540,17 +455,24 @@ const clearContent = () => {
 }
 
 .emoji-bar {
-  margin-bottom: 10px;
-  padding: 8px;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  display: grid;
+  margin-bottom: 15px;
+  padding: 10px;
+  gap: 5px;
+  grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
 
   .emoji {
-    margin-right: 5px;
+    padding: 2px;
     border-radius: 999px;
     width: 30px;
     height: 30px;
+    background: #8d8d8d;
     cursor: pointer;
+
+    /* 禁止图片可以被拖动 */
+    user-select: none;
+    -webkit-user-drag: none;
+    vertical-align: middle;
     transition: transform 0.2s;
 
     &:hover {
@@ -572,6 +494,19 @@ const clearContent = () => {
   );
   line-height: 1.6;
   font-size: 16px;
+
+  :deep(img) {
+    margin: 0 2px;
+    padding: 2px;
+    width: 20px;
+    height: 20px;
+    background: #8d8d8d;
+
+    /* 禁止图片可以被拖动 */
+    user-select: none;
+    -webkit-user-drag: none;
+    vertical-align: middle;
+  }
 
   &:empty::before {
     cursor: text;
