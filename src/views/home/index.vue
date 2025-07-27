@@ -17,7 +17,8 @@ const editorRef = ref<HTMLDivElement | null>(null)
 
 const genEmojisCode = (code: string) => `<TXC00${code}>`
 
-const genColorCode = (color: string) => `<FG${color.replace("#", "")}FF>`
+const genColorCode = (color: string, text: string) =>
+  `<FG${color.replace("#", "")}FF>${text}</FG${color.replace("#", "")}FF>`
 // 预设颜色
 const colors = [
   "#e11d48",
@@ -57,19 +58,20 @@ const applyColor = (color: string) => {
       const renderEl = document.createDocumentFragment()
 
       Array.from(contents.childNodes || []).forEach((childEl) => {
-        if (childEl.nodeType !== 1) {
-          const spans = document.createDocumentFragment()
-          Array.from((childEl as Text).textContent || "").forEach((char) => {
-            spans.appendChild(wrapSpan(char, color))
-          })
-          renderEl.appendChild(spans)
-        } else if (childEl.nodeName === "SPAN") {
-          const span = childEl as HTMLSpanElement
-          span.dataset.colorCode = color // 添加自定义属性以便后续处理
-          span.style.color = color
+        if (childEl.nodeType === Node.TEXT_NODE) {
+          // 如果是文本节点，直接包裹span
+          const span = wrapSpan(childEl.textContent || "", color)
           renderEl.appendChild(span)
-        } else {
-          renderEl.appendChild(childEl)
+        } else if (childEl.nodeType === Node.ELEMENT_NODE) {
+          // 如果是元素节点，检查是否是图片或其他元素
+          if ((childEl as HTMLElement).tagName === "IMG") {
+            // 如果是图片，直接添加
+            renderEl.appendChild(childEl.cloneNode(true))
+          } else {
+            // 其他元素，包裹span
+            const span = wrapSpan(childEl.textContent || "", color)
+            renderEl.appendChild(span)
+          }
         }
       })
 
@@ -125,34 +127,7 @@ const copyContent = async () => {
     Message.warning("复制失败，未知原因")
   }
 }
-
 function nodeToContent(node: DocumentFragment): string {
-  const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, {
-    acceptNode: function (textNode) {
-      const parent = textNode.parentNode as HTMLElement
-
-      if (!parent || parent.tagName !== "SPAN") {
-        if (textNode.textContent?.trim()) {
-          return NodeFilter.FILTER_ACCEPT
-        }
-      }
-      return NodeFilter.FILTER_REJECT
-    },
-  })
-  const textNodesToWrap: Node[] = []
-  let textNode: Node | null
-  while ((textNode = walker.nextNode())) {
-    textNodesToWrap.push(textNode)
-  }
-
-  // 包裹每个文本节点
-  textNodesToWrap.forEach((textNode) => {
-    textNode.parentNode?.replaceChild(
-      wrapSpan(textNode.textContent || ""),
-      textNode,
-    )
-  })
-
   // 将表情图片替换为代码
   node.querySelectorAll("img[data-emoji-code]").forEach((img) => {
     const code = (img as HTMLElement).dataset.emojiCode
@@ -161,71 +136,41 @@ function nodeToContent(node: DocumentFragment): string {
     }
   })
 
-  const colorSpans = node.querySelectorAll("span[data-color-code]")
+  // 将带颜色的span转换为颜色代码
 
-  colorSpans.forEach((span, index) => {
-    const prevColorCode =
-      (colorSpans[index - 1] as HTMLElement)?.dataset.colorCode || ""
+  const spans = Array.from(node.querySelectorAll("span[data-color-code]"))
 
-    const colorCode = (span as HTMLElement).dataset.colorCode
-
-    const isSome = prevColorCode && prevColorCode === colorCode
-
-    const textContent = span.textContent || ""
-
-    if (textContent.trim() === "") return
-
-    if (isSome) {
-      span.replaceWith(document.createTextNode(textContent))
-      return
-    }
-
-    if (colorCode) {
-      span.replaceWith(
-        document.createTextNode(`${genColorCode(colorCode)}${textContent}`),
-      )
+  // 从最深层的span开始处理，避免嵌套问题
+  spans.reverse().forEach((span) => {
+    const color = (span as HTMLElement).dataset.colorCode
+    const text = span.textContent || ""
+    if (color && text) {
+      span.replaceWith(document.createTextNode(genColorCode(color, text)))
     }
   })
 
   return node.textContent || ""
 }
 
-function appendTextWithColor(
-  fragment: DocumentFragment,
-  text: string,
-  color: string,
-) {
-  if (color) {
-    // 为每个字符创建带颜色的span
-    Array.from(text).forEach((char) => {
-      const span = document.createElement("span")
-      span.style.color = color
-      span.dataset.colorCode = color
-      span.textContent = char
-      fragment.appendChild(span)
-    })
-  } else {
-    fragment.appendChild(document.createTextNode(text))
-  }
-}
-
 function contentToNode(textContent: string): DocumentFragment {
   const fragment = document.createDocumentFragment()
   let currentIndex = 0
-  let currentColor = ""
 
-  // 匹配表情和颜色代码
-  const formatPattern = /(<TXC[0-9A-Fa-f]+>|<FG([0-9A-Fa-f]{6})FF>)/g
+  // 匹配表情和颜色代码（包括结束标签）
+  const formatPattern =
+    /(<TXC[0-9A-Fa-f]+>|<FG([0-9A-Fa-f]{6})FF>(.*?)<\/FG[0-9A-Fa-f]{6}FF>)/g
   let match
 
   while ((match = formatPattern.exec(textContent)) !== null) {
-    // 添加匹配前的文本
-    const beforeText = textContent.substring(currentIndex, match.index)
-    if (beforeText) {
-      appendTextWithColor(fragment, beforeText, currentColor)
+    // 添加匹配前的普通文本
+    if (match.index > currentIndex) {
+      const plainText = textContent.slice(currentIndex, match.index)
+      if (plainText) {
+        fragment.appendChild(document.createTextNode(plainText))
+      }
     }
 
-    const fullMatch = match[1]
+    const fullMatch = match[0]
     if (fullMatch.startsWith("<TXC")) {
       // 处理表情
       const emoji = emojis.value?.find((e) => genEmojisCode(e.id) === fullMatch)
@@ -239,19 +184,29 @@ function contentToNode(textContent: string): DocumentFragment {
         fragment.appendChild(img)
       }
     } else if (fullMatch.startsWith("<FG")) {
-      // 处理颜色代码
-      const colorHex = match[2]
-      currentColor = `#${colorHex}`
+      // 处理颜色文字
+      const color = match[2] // 提取颜色值
+      const text = match[3] // 提取文字内容
+      if (color && text) {
+        const span = document.createElement("span")
+        span.style.color = `#${color}`
+        span.textContent = text
+        span.dataset.colorCode = `#${color}`
+        fragment.appendChild(span)
+      }
     }
 
     currentIndex = formatPattern.lastIndex
   }
 
-  // 添加剩余的文本
-  const remainingText = textContent.substring(currentIndex)
-  if (remainingText) {
-    appendTextWithColor(fragment, remainingText, currentColor)
+  // 添加剩余的普通文本
+  if (currentIndex < textContent.length) {
+    const remainingText = textContent.slice(currentIndex)
+    if (remainingText) {
+      fragment.appendChild(document.createTextNode(remainingText))
+    }
   }
+
   return fragment
 }
 
