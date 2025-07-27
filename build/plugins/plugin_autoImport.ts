@@ -4,7 +4,7 @@
  */
 
 import AutoImport from "unplugin-auto-import/vite"
-import { VantResolver } from "@vant/auto-import-resolver"
+import { ArcoResolver } from "unplugin-vue-components/resolvers"
 
 export default function () {
   return AutoImport({
@@ -13,9 +13,7 @@ export default function () {
     imports: ["vue", "vue-router"],
     vueTemplate: true,
     resolvers: [
-      VantResolver({
-        importStyle: false, // 为了避免出现某些样式没有正确的打包，这里设置为全量引入
-      }),
+      ArcoResolver(),
     ],
   })
 }

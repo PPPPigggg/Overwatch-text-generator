@@ -1,19 +1,14 @@
 <script lang="ts" setup>
 import CircularText from "./components/CircularText.vue"
 import FadeContent from "./components/FadeContent.vue"
+import EmojiPicker from "./components/EmojiPicker.vue"
+
 import SvgIcon from "@/components/svg-icon"
 import { ref } from "vue"
-import { showNotify } from "vant"
 import { copyText } from "@/utils/copy"
 import { useFetch } from "@vueuse/core"
-
-interface IEmojiItem {
-  id: string
-  url: string
-  isTop?: number
-  classify?: string
-  name?: string
-}
+import { Message } from "@arco-design/web-vue"
+import type { IEmojiItem } from "./type"
 
 const { data: emojis } = useFetch("./textures.json").json<IEmojiItem[]>()
 
@@ -125,17 +120,9 @@ const copyContent = async () => {
   const resultText = nodeToContent(contentClone)
 
   try {
-    copyText(resultText, resultText)
-
-    showNotify({
-      type: "success",
-      message: "内容已复制到剪贴板",
-    })
+    copyText(resultText)
   } catch (err) {
-    showNotify({
-      type: "danger",
-      message: "复制失败，未知原因",
-    })
+    Message.warning("复制失败，未知原因")
   }
 }
 
@@ -282,11 +269,7 @@ const handleCopy = (e: ClipboardEvent) => {
 
   const resultText = nodeToContent(contents)
 
-  copyText(resultText, null)
-  showNotify({
-    type: "success",
-    message: "内容已复制到剪贴板",
-  })
+  copyText(resultText)
 }
 
 // 处理剪切事件
@@ -350,6 +333,21 @@ const clearContent = () => {
     editorRef.value.innerHTML = ""
   }
 }
+
+const popAnimation = ref("zoom-in-right")
+// 当前宽度小于700px时，使用zoom -in -right动画
+
+const handleResize = () => {
+  if (window.innerWidth < 780) {
+    popAnimation.value = "zoom-in"
+  } else {
+    popAnimation.value = "zoom-in-left"
+  }
+}
+
+onMounted(() => {
+  handleResize()
+})
 </script>
 
 <template>
@@ -373,6 +371,26 @@ const clearContent = () => {
             @click="insertEmoji(emoji)"
             class="emoji"
           />
+          <a-trigger
+            trigger="click"
+            :unmount-on-close="false"
+            update-at-scroll
+            :popup-offset="20"
+            position="right"
+            :animation-name="popAnimation"
+          >
+            <div class="more-btn emoji">
+              <SvgIcon name="more" color="#fff"></SvgIcon>
+              <div class="demo-basic"></div>
+            </div>
+            <template #content>
+              <EmojiPicker
+                :emojis="emojis || []"
+                @select="(emoji) => insertEmoji(emoji)"
+              >
+              </EmojiPicker>
+            </template>
+          </a-trigger>
         </div>
         <div class="rich-input-container">
           <div class="rich-input-container-inner">
@@ -422,7 +440,7 @@ const clearContent = () => {
 
     <div class="bottom-0 right-0 position-fixed">
       <CircularText
-        text="by * 一坨猪 * overwatch * "
+        text="by * 一坨猪 * overwatch * input * "
         :spin-duration="20"
         on-hover="speedUp"
         @click="copyText('一坨猪#5358', '一坨猪#5358')"
@@ -438,7 +456,7 @@ const clearContent = () => {
   padding: 0.375rem;
   border: 1px solid #ccc;
   border-radius: 28px;
-  width: 50vw;
+  width: 40vw;
   box-shadow: rgb(0 0 0 / 6%) 0 42px 30px 0;
   box-shadow: rgb(255 255 255) 0 0 0 1px inset;
   box-shadow: var(--shadow-color-3);
@@ -456,27 +474,51 @@ const clearContent = () => {
 
 .emoji-bar {
   display: grid;
+  position: relative;
   margin-bottom: 15px;
   padding: 10px;
   gap: 5px;
   grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
 
+  .more-btn {
+    display: flex;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: #ec6516 !important;
+    cursor: pointer;
+    color: white;
+  }
+
   .emoji {
+    box-sizing: border-box;
     padding: 2px;
     border-radius: 999px;
     width: 30px;
     height: 30px;
-    background: #8d8d8d;
+    background: #cccccc;
     cursor: pointer;
 
     /* 禁止图片可以被拖动 */
     user-select: none;
     -webkit-user-drag: none;
     vertical-align: middle;
-    transition: transform 0.2s;
+    transition: all 0.5s;
 
     &:hover {
-      transform: scale(1.2);
+      background-color: #ec6516;
+      box-shadow: 0 0 20px #ec651650;
+      transform: scale(1.1);
+    }
+
+    &:active {
+      background-color: #ec6516;
+      box-shadow: none;
+      transform: scale(0.98);
+      transition: all 0.25s;
     }
   }
 }
@@ -500,7 +542,7 @@ const clearContent = () => {
     padding: 2px;
     width: 20px;
     height: 20px;
-    background: #8d8d8d;
+    background: #cccccc;
 
     /* 禁止图片可以被拖动 */
     user-select: none;
@@ -511,7 +553,7 @@ const clearContent = () => {
   &:empty::before {
     cursor: text;
     color: #746d68;
-    content: "请输入内容...";
+    content: "请输入内容，注意：部分图标无法在游戏内正常显示，需自行测试...";
   }
 }
 

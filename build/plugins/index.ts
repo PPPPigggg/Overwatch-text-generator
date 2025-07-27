@@ -9,12 +9,18 @@ import envType from "./plugin_envType"
 import svgIcon from "./plugin_svgIcon"
 import vitePluginRequire from "vite-plugin-require"
 import legacy from "@vitejs/plugin-legacy"
+import { vitePluginForArco } from "@arco-plugins/vite-vue"
+
 // @ts-ignore
 import type { PluginOption } from "vite"
 export function createVitePlugins(isBuild: boolean): PluginOption[] {
   const vitePlugins: PluginOption[] = [
     vue(),
+
     vueJsx(),
+    vitePluginForArco({
+      style: "css",
+    }),
     Unocss(),
     // 按需加载组件，自动引入组件
     autoComponent(),

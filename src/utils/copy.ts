@@ -1,5 +1,4 @@
-import { showToast } from "vant"
-
+import { Message } from "@arco-design/web-vue"
 export function copyText(
   text: string | undefined | null,
   prompt: string | null = "已复制到剪切板!",
@@ -10,7 +9,11 @@ export function copyText(
     return navigator.clipboard
       .writeText(text)
       .then(() => {
-        prompt && showToast(prompt)
+        prompt &&
+          Message.success({
+            content: prompt,
+            position: "bottom",
+          })
       })
       .catch((error) => {
         console.error("复制失败!", error)
@@ -32,7 +35,11 @@ export function copyText(
       document.execCommand("copy")
       document.body.removeChild(textArea)
 
-      prompt && showToast(prompt)
+      prompt &&
+        Message.success({
+          content: prompt,
+          position: "bottom",
+        })
     } catch (error: any) {
       console.error("复制失败!", error)
     }

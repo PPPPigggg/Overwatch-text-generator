@@ -10,7 +10,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { showLoadingToast } from "vant"
+// import { showLoadingToast } from "vant"
 import { ref } from "vue"
 
 const iframeRef = ref<HTMLIFrameElement | null>(null)
@@ -30,14 +30,14 @@ const emits = defineEmits<{
   (e: "load"): void
 }>()
 
-const loading = showLoadingToast({
-  message: "",
-  forbidClick: true,
-})
+// const loading = showLoadingToast({
+//   message: "",
+//   forbidClick: true,
+// })
 
 const onFrameLoad = () => {
   emits("load")
-  loading.close()
+  // loading.close()
 }
 
 defineExpose({

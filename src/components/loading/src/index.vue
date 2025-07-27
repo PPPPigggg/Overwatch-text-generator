@@ -6,14 +6,14 @@
       :class="{ absolute, [`${theme}`]: !!theme }"
       :style="[background ? `background-color: ${background}` : '']"
     >
-      <Loading vertical v-bind="$attrs" color="var(--base-primary)">
-        {{ text }}
-      </Loading>
+      <ASpin dot />
+      <!-- <Loading vertical v-bind="$attrs" color="var(--base-primary)"> -->
+      <!-- </Loading> -->
+      {{ text }}
     </section>
   </Transition>
 </template>
 <script lang="ts" setup>
-import { Loading } from "vant"
 import { loadingProps } from "./props"
 
 defineOptions({ name: "Loading" })

@@ -61,7 +61,7 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
       // proxy: proxy(env),
     },
     optimizeDeps: {
-      include: ["vue", "vue-router", "@vueuse/core", "vant"],
+      include: ["vue", "vue-router", "@vueuse/core"],
     },
     esbuild: {
       pure: VITE_DROP_CONSOLE ? ["console.log", "debugger"] : [],

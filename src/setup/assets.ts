@@ -1,7 +1,6 @@
 import "virtual:svg-icons-register"
 import "uno.css"
 import "@/styles/index.scss"
-import "vant/lib/index.css"
 import vConsole from "vconsole"
 import type { App } from "vue"
 
