@@ -44,7 +44,4 @@ export function copyText(
       console.error("复制失败!", error)
     }
   }
-  console.log(
-    '"navigator.clipboard" 或 "document.execCommand" 中存在API错误, 拷贝失败!"',
-  )
 }

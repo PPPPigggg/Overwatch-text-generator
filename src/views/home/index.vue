@@ -229,11 +229,17 @@ const handleCopy = (e: ClipboardEvent) => {
 
 // 处理剪切事件
 const handleCut = (e: ClipboardEvent) => {
+  // 先复制内容
   handleCopy(e)
 
+  // 然后删除选中的内容
   const selection = window.getSelection()
   if (selection && selection.rangeCount > 0) {
-    selection.deleteFromDocument()
+    const range = selection.getRangeAt(0)
+    range.deleteContents() // 使用 range.deleteContents() 而不是 selection.deleteFromDocument()
+    range.collapse()
+    selection.removeAllRanges()
+    selection.addRange(range)
   }
 }
 
