@@ -9,7 +9,7 @@ import { ref, onMounted, onUnmounted } from "vue"
 import { animate as anime, type AnimationParams } from "animejs"
 
 const props = {
-  blur: false,
+  blur: true,
   duration: 400,
   easing: "ease-out",
   delay: 200,
