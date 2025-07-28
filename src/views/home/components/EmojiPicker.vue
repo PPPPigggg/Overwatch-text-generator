@@ -224,9 +224,19 @@ onMounted(() => {
   transition: transform 0.5s;
   overflow: hidden;
 
+  transition: all 0.3s;
+
   &:hover {
-    transform: scale(1.3);
-    border: 2px solid #fff;
+    background-color: #ec6516;
+    box-shadow: 0 0 20px #ec651650;
+    transform: scale(1.1);
+  }
+
+  &:active {
+    background-color: #ec6516;
+    box-shadow: none;
+    transform: scale(0.98);
+    transition: all 0.25s;
   }
 
   .emoji-image {

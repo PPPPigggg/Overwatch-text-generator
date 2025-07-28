@@ -1,6 +1,6 @@
- <script setup lang="ts">
-import { computed, ref, watchEffect, onUnmounted } from "vue"
-import { Motion } from "motion-v"
+<script setup lang="ts">
+import { computed, ref, watch, onMounted, onUnmounted } from "vue"
+import { animate as anime, JSAnimation } from "animejs"
 
 interface CircularTextProps {
   text: string
@@ -18,71 +18,62 @@ const props = withDefaults(defineProps<CircularTextProps>(), {
 
 const letters = computed(() => Array.from(props.text))
 const isHovered = ref(false)
+const containerRef = ref<HTMLElement | null>(null)
+let animationInstance: JSAnimation | null = null
 
-const currentRotation = ref(0)
-const animationId = ref<number | null>(null)
-const lastTime = ref<number>(Date.now())
-const rotationSpeed = ref<number>(0)
+const runAnimation = () => {
+  if (animationInstance) {
+    animationInstance.pause()
+  }
 
-const getCurrentSpeed = () => {
-  if (isHovered.value && props.onHover === "pause") return 0
+  if (isHovered.value && props.onHover === "pause") {
+    return // 暂停动画
+  }
 
-  const baseDuration = props.spinDuration
-  const baseSpeed = 360 / baseDuration
+  const baseDuration = props.spinDuration * 1000
+  let duration = baseDuration
+  let scale = 1
 
-  if (!isHovered.value) return baseSpeed
+  if (isHovered.value) {
+    switch (props.onHover) {
+      case "slowDown":
+        duration = baseDuration * 2
+        break
+      case "speedUp":
+        duration = baseDuration / 4
+        break
+      case "goBonkers":
+        duration = baseDuration / 20
+        scale = 0.8
+        break
+    }
+  }
 
-  switch (props.onHover) {
-    case "slowDown":
-      return baseSpeed / 2
-    case "speedUp":
-      return baseSpeed * 4
-    case "goBonkers":
-      return baseSpeed * 20
-    default:
-      return baseSpeed
+  if (containerRef.value) {
+    animationInstance = anime(containerRef.value, {
+      rotate: "+=360",
+      scale,
+      loop: true,
+      duration,
+      easing: "linear",
+    })
   }
 }
 
-const getCurrentScale = () => {
-  return isHovered.value && props.onHover === "goBonkers" ? 0.8 : 1
-}
-
-const animate = () => {
-  const now = Date.now()
-  const deltaTime = (now - lastTime.value) / 1000
-  lastTime.value = now
-
-  const targetSpeed = getCurrentSpeed()
-
-  const speedDiff = targetSpeed - rotationSpeed.value
-  const smoothingFactor = Math.min(1, deltaTime * 5)
-  rotationSpeed.value += speedDiff * smoothingFactor
-
-  currentRotation.value =
-    (currentRotation.value + rotationSpeed.value * deltaTime) % 360
-
-  animationId.value = requestAnimationFrame(animate)
-}
-
-const startAnimation = () => {
-  if (animationId.value) {
-    cancelAnimationFrame(animationId.value)
+onMounted(() => {
+  if (containerRef.value) {
+    runAnimation()
   }
-  lastTime.value = Date.now()
-  rotationSpeed.value = getCurrentSpeed()
-  animate()
-}
-
-watchEffect(() => {
-  startAnimation()
 })
 
-startAnimation()
+watch(isHovered, () => {
+  runAnimation()
+})
 
 onUnmounted(() => {
-  if (animationId.value) {
-    cancelAnimationFrame(animationId.value)
+  if (animationInstance) {
+    animationInstance.pause()
+    animationInstance = null
   }
 })
 
@@ -104,21 +95,8 @@ const getLetterTransform = (index: number) => {
 </script>
 
 <template>
-  <Motion
-    :animate="{
-      rotate: currentRotation,
-      scale: getCurrentScale(),
-    }"
-    :transition="{
-      rotate: {
-        duration: 0,
-      },
-      scale: {
-        type: 'spring',
-        damping: 20,
-        stiffness: 300,
-      },
-    }"
+  <div
+    ref="containerRef"
     :class="`m-0 mx-auto rounded-full w-[100px] h-[100px] relative font-black text-black text-center cursor-pointer origin-center ${props.className}`"
     @mouseenter="handleHoverStart"
     @mouseleave="handleHoverEnd"
@@ -134,5 +112,5 @@ const getLetterTransform = (index: number) => {
     >
       {{ letter }}
     </span>
-  </Motion>
+  </div>
 </template>

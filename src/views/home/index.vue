@@ -90,9 +90,9 @@ const applyColor = (color: string) => {
 
       range.insertNode(renderEl)
 
-      range.collapse()
-      selection.removeAllRanges()
-      selection.addRange(range)
+      // range.collapse()
+      // selection.removeAllRanges()
+      // selection.addRange(range)
     }
   }
 }
@@ -324,14 +324,7 @@ onMounted(() => {
   <div
     class="w-100vw h-100vh overflow-y-auto flex-center bg-#f8f4f1 select-none"
   >
-    <FadeContent
-      :blur="true"
-      :duration="400"
-      :delay="200"
-      :threshold="0.1"
-      :initial-opacity="0"
-      easing="ease-out"
-    >
+    <FadeContent>
       <div>
         <!-- 表情选择栏 -->
         <div class="emoji-bar">
@@ -448,15 +441,15 @@ onMounted(() => {
   display: grid;
   position: relative;
   margin-bottom: 15px;
-  padding: 10px;
+  padding: 15px;
   gap: 5px;
   grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
 
   .more-btn {
     display: flex;
     position: absolute;
-    right: 10px;
-    bottom: 10px;
+    right: 15px;
+    bottom: 15px;
     justify-content: center;
     align-items: center;
     border-radius: 50%;
@@ -477,7 +470,7 @@ onMounted(() => {
     /* 禁止图片可以被拖动 */
     -webkit-user-drag: none;
     vertical-align: middle;
-    transition: all 0.5s;
+    transition: all 0.3s;
 
     &:hover {
       background-color: #ec6516;
@@ -508,10 +501,6 @@ onMounted(() => {
   line-height: 1.6;
   font-size: 16px;
 
-  :deep(span) {
-    vertical-align: middle;
-  }
-
   :deep(img) {
     margin: 0 2px;
     padding: 2px;
@@ -521,7 +510,6 @@ onMounted(() => {
 
     /* 禁止图片可以被拖动 */
     -webkit-user-drag: none;
-    vertical-align: middle;
   }
 
   &:empty::before {

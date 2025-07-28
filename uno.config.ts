@@ -1,12 +1,7 @@
 import { defineConfig, Postprocessor, presetMini } from "unocss"
-import { presetGrid } from "unocss-preset-grid"
 
 export default defineConfig({
-  presets: [
-    presetMini(),
-    // @ts-ignore
-    presetGrid(),
-  ],
+  presets: [presetMini()],
   rules: [
     // .text-color1
     [

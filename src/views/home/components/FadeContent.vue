@@ -1,42 +1,24 @@
 <template>
-  <div
-    ref="elementRef"
-    :class="className"
-    :style="{
-      opacity: inView ? 1 : initialOpacity,
-      transition: `opacity ${duration}ms ${easing}, filter ${duration}ms ${easing}`,
-      filter: blur ? (inView ? 'blur(0px)' : 'blur(10px)') : 'none',
-    }"
-  >
+  <div ref="elementRef" :style="{ opacity: props.initialOpacity }">
     <slot />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, useTemplateRef } from "vue"
+import { ref, onMounted, onUnmounted } from "vue"
+import { animate as anime, type AnimationParams } from "animejs"
 
-interface Props {
-  blur?: boolean
-  duration?: number
-  easing?: string
-  delay?: number
-  threshold?: number
-  initialOpacity?: number
-  className?: string
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = {
   blur: false,
-  duration: 1000,
+  duration: 400,
   easing: "ease-out",
-  delay: 0,
+  delay: 200,
   threshold: 0.1,
   initialOpacity: 0,
   className: "",
-})
+}
 
-const inView = ref(false)
-const elementRef = useTemplateRef<HTMLDivElement>("elementRef")
+const elementRef = ref<HTMLDivElement | null>(null)
 let observer: IntersectionObserver | null = null
 
 onMounted(() => {
@@ -47,9 +29,19 @@ onMounted(() => {
     ([entry]) => {
       if (entry.isIntersecting) {
         observer?.unobserve(element)
-        setTimeout(() => {
-          inView.value = true
-        }, props.delay)
+
+        const animeProps: AnimationParams = {
+          opacity: [props.initialOpacity, 1],
+          duration: props.duration,
+          easing: props.easing,
+          delay: props.delay,
+        }
+
+        if (props.blur) {
+          animeProps.filter = ["blur(10px)", "blur(0px)"]
+        }
+
+        anime(element, animeProps)
       }
     },
     { threshold: props.threshold },
