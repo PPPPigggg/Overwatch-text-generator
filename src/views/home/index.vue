@@ -351,9 +351,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    class="w-100vw h-100vh overflow-y-auto flex-center bg-#f8f4f1 select-none"
-  >
+  <div class="w-100vw h-100vh overflow-y-auto flex-center select-none">
     <FadeContent>
       <div>
         <!-- 表情选择栏 -->

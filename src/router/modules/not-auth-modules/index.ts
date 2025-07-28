@@ -1,6 +1,6 @@
 import type { RouteRecordRaw } from "vue-router"
 import { HOME_NAME } from "@/router/constant"
-// import errRoutes from "./error"
+import errRoutes from "./error"
 
 /**
  * 不需要登陆权限的路由
@@ -15,4 +15,5 @@ export default [
     },
     component: () => import("@/views/home/index.vue"),
   },
+  ...errRoutes,
 ] as RouteRecordRaw[]
