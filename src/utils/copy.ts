@@ -5,6 +5,21 @@ export function copyText(
 ) {
   if (!text) return
 
+  if (navigator.clipboard) {
+    return navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        prompt &&
+          Message.success({
+            content: prompt,
+            position: "bottom",
+          })
+      })
+      .catch((error) => {
+        console.error("复制失败!", error)
+        return error
+      })
+  }
   if (Reflect.has(document, "execCommand")) {
     try {
       const textArea = document.createElement("textarea")
@@ -26,23 +41,9 @@ export function copyText(
           position: "bottom",
         })
     } catch (error: any) {
-      console.error("复制失败!", error)
+      console.log(
+        '"navigator.clipboard" 或 "document.execCommand" 中存在API错误, 拷贝失败!"',
+      )
     }
-  }
-
-  if (navigator.clipboard) {
-    return navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        prompt &&
-          Message.success({
-            content: prompt,
-            position: "bottom",
-          })
-      })
-      .catch((error) => {
-        console.error("复制失败!", error)
-        return error
-      })
   }
 }

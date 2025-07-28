@@ -151,15 +151,40 @@ function nodeToContent(node: DocumentFragment): string {
   // 将带颜色的span转换为颜色代码
 
   const spans = Array.from(node.querySelectorAll("span[data-color-code]"))
+  if (spans.length !== 0) {
+    const groups: HTMLElement[][] = []
+    let groupSpan = [spans[0] as HTMLElement]
+    for (let i = 1; i < spans.length; i++) {
+      const currentSpan = spans[i] as HTMLElement
+      const previousSpan = spans[i - 1] as HTMLElement
 
-  // 从最深层的span开始处理，避免嵌套问题
-  spans.reverse().forEach((span) => {
-    const color = (span as HTMLElement).dataset.colorCode
-    const text = span.textContent || ""
-    if (color && text) {
-      span.replaceWith(document.createTextNode(genColorCode(color, text)))
+      if (currentSpan.dataset.colorCode === previousSpan?.dataset.colorCode) {
+        groupSpan.push(currentSpan)
+      } else {
+        groups.push(groupSpan)
+        groupSpan = [currentSpan]
+      }
     }
-  })
+
+    // 添加最后一个分组
+    if (groupSpan.length > 0) {
+      groups.push(groupSpan)
+    }
+
+    groups.forEach((group) => {
+      const [firstSpan, ...restSpans] = group
+      const colorCode = firstSpan.dataset.colorCode || ""
+      const combinedText = group.map((span) => span.textContent || "").join("")
+
+      const textNode = document.createTextNode(
+        genColorCode(colorCode, combinedText),
+      )
+      firstSpan.replaceWith(textNode)
+
+      // 移除其余的span元素
+      restSpans.forEach((span) => span.remove())
+    })
+  }
 
   return node.textContent || ""
 }
@@ -170,22 +195,22 @@ function contentToNode(textContent: string): DocumentFragment {
 
   // 匹配表情和颜色代码（包括结束标签）
   const formatPattern =
-    /(<TXC[0-9A-Fa-f]+>|<FG([0-9A-Fa-f]{6})FF>(.*?)<\/FG[0-9A-Fa-f]{6}FF>)/g
-  let match
+    /(<TXC[0-9A-Fa-f]+>)|(<FG([0-9A-Fa-f]{6})FF>(.*?)<\/FG[0-9A-Fa-f]{6}FF>)/g
 
-  while ((match = formatPattern.exec(textContent)) !== null) {
+  const matches = Array.from(textContent.matchAll(formatPattern))
+
+  for (const match of matches) {
     // 添加匹配前的普通文本
-    if (match.index > currentIndex) {
+    if (match.index! > currentIndex) {
       const plainText = textContent.slice(currentIndex, match.index)
       if (plainText) {
         fragment.appendChild(document.createTextNode(plainText))
       }
     }
 
-    const fullMatch = match[0]
-    if (fullMatch.startsWith("<TXC")) {
+    if (match[1]) {
       // 处理表情
-      const emoji = emojis.value?.find((e) => genEmojisCode(e.id) === fullMatch)
+      const emoji = emojis.value?.find((e) => genEmojisCode(e.id) === match[1])
       if (emoji) {
         const img = document.createElement("img")
         img.src = emoji.url
@@ -195,20 +220,21 @@ function contentToNode(textContent: string): DocumentFragment {
         img.style.verticalAlign = "middle"
         fragment.appendChild(img)
       }
-    } else if (fullMatch.startsWith("<FG")) {
+    } else if (match[2]) {
       // 处理颜色文字
-      const color = match[2] // 提取颜色值
-      const text = match[3] // 提取文字内容
+      const color = match[3]
+      const text = match[4]
       if (color && text) {
         const span = document.createElement("span")
         span.style.color = `#${color}`
-        span.textContent = text
         span.dataset.colorCode = `#${color}`
+        const innerFragment = contentToNode(text)
+        span.appendChild(innerFragment)
         fragment.appendChild(span)
       }
     }
 
-    currentIndex = formatPattern.lastIndex
+    currentIndex = match.index! + match[0].length
   }
 
   // 添加剩余的普通文本
