@@ -58,22 +58,35 @@ const applyColor = (color: string) => {
       const renderEl = document.createDocumentFragment()
 
       Array.from(contents.childNodes || []).forEach((childEl) => {
-        if (childEl.nodeType === Node.TEXT_NODE) {
-          // 如果是文本节点，直接包裹span
-          const span = wrapSpan(childEl.textContent || "", color)
-          renderEl.appendChild(span)
-        } else if (childEl.nodeType === Node.ELEMENT_NODE) {
-          // 如果是元素节点，检查是否是图片或其他元素
-          if ((childEl as HTMLElement).tagName === "IMG") {
-            // 如果是图片，直接添加
-            renderEl.appendChild(childEl.cloneNode(true))
-          } else {
-            // 其他元素，包裹span
-            const span = wrapSpan(childEl.textContent || "", color)
-            renderEl.appendChild(span)
-          }
+        const el = childEl as HTMLElement
+
+        if (el.nodeType === Node.ELEMENT_NODE && el.tagName === "IMG") {
+          // 如果是图片，直接添加
+          renderEl.appendChild(el)
+          return
         }
+
+        // 如果是文本节点，直接包裹span
+        const spans = document.createDocumentFragment()
+
+        Array.from(el.textContent || "").forEach((char) => {
+          const span = wrapSpan(char, color)
+          el.replaceWith(span) // 替换原有的文本节点
+          spans.appendChild(span)
+        })
+
+        renderEl.appendChild(spans)
       })
+
+      const commonContainer = range.commonAncestorContainer
+
+      if (
+        commonContainer.nodeType === Node.TEXT_NODE &&
+        commonContainer.parentElement?.nodeName === "SPAN" &&
+        commonContainer.parentElement.dataset.colorCode
+      ) {
+        commonContainer.parentElement.remove()
+      }
 
       range.insertNode(renderEl)
 
@@ -95,7 +108,6 @@ const wrapSpan = (text: string, color: string = "#000000") => {
   const span = document.createElement("span")
   span.style.color = color
   span.textContent = text
-
   span.dataset.colorCode = color
   return span
 }
@@ -121,11 +133,7 @@ const copyContent = async () => {
   contentClone.appendChild(editorRef.value.cloneNode(true))
   const resultText = nodeToContent(contentClone)
 
-  try {
-    copyText(resultText)
-  } catch (err) {
-    Message.warning("复制失败，未知原因")
-  }
+  copyText(resultText)
 }
 function nodeToContent(node: DocumentFragment): string {
   // 将表情图片替换为代码
@@ -212,7 +220,7 @@ function contentToNode(textContent: string): DocumentFragment {
 
 // 处理复制事件
 const handleCopy = (e: ClipboardEvent) => {
-  e.stopPropagation()
+  e.preventDefault()
   const selection = window.getSelection()
 
   if (!(selection && selection.rangeCount > 0)) return
@@ -229,17 +237,18 @@ const handleCopy = (e: ClipboardEvent) => {
 
 // 处理剪切事件
 const handleCut = (e: ClipboardEvent) => {
-  // 先复制内容
-  handleCopy(e)
-
-  // 然后删除选中的内容
+  // 删除选中的内容
   const selection = window.getSelection()
   if (selection && selection.rangeCount > 0) {
     const range = selection.getRangeAt(0)
-    range.deleteContents() // 使用 range.deleteContents() 而不是 selection.deleteFromDocument()
-    range.collapse()
-    selection.removeAllRanges()
-    selection.addRange(range)
+
+    handleCopy(e)
+
+    if (!range.collapsed) {
+      range.deleteContents() // 删除选中的内容
+      selection.removeAllRanges()
+      selection.addRange(range) // 更新选区
+    }
   }
 }
 
@@ -312,7 +321,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-100vw h-100vh overflow-y-auto flex-center bg-#f8f4f1">
+  <div
+    class="w-100vw h-100vh overflow-y-auto flex-center bg-#f8f4f1 select-none"
+  >
     <FadeContent
       :blur="true"
       :duration="400"
@@ -464,7 +475,6 @@ onMounted(() => {
     cursor: pointer;
 
     /* 禁止图片可以被拖动 */
-    user-select: none;
     -webkit-user-drag: none;
     vertical-align: middle;
     transition: all 0.5s;
@@ -498,6 +508,10 @@ onMounted(() => {
   line-height: 1.6;
   font-size: 16px;
 
+  :deep(span) {
+    vertical-align: middle;
+  }
+
   :deep(img) {
     margin: 0 2px;
     padding: 2px;
@@ -506,7 +520,6 @@ onMounted(() => {
     background: #cccccc;
 
     /* 禁止图片可以被拖动 */
-    user-select: none;
     -webkit-user-drag: none;
     vertical-align: middle;
   }
