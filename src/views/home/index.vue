@@ -17,8 +17,10 @@ const editorRef = ref<HTMLDivElement | null>(null)
 
 const genEmojisCode = (code: string) => `<TXC00${code}>`
 
-const genColorCode = (color: string, text: string) =>
-  `<FG${color.replace("#", "")}FF>${text}</FG${color.replace("#", "")}FF>`
+const genColorCode = (color: string, text: string) => {
+  if (!color) return ""
+  return `<FG${color.replace("#", "")}FF>${text}</FG${color.replace("#", "")}FF>`
+}
 // 预设颜色
 const colors = [
   "#e11d48",
@@ -48,7 +50,7 @@ const insertEmoji = (emoji: IEmojiItem) => {
   insertNodeAtCursor(renderEl)
 }
 
-const applyColor = (color: string) => {
+const applyColor = (color?: string) => {
   const selection = window.getSelection()
   if (selection && selection.rangeCount > 0) {
     const range = selection.getRangeAt(0)
@@ -104,11 +106,13 @@ const handleInput = (e: InputEvent) => {
 }
 
 // 包装span标签
-const wrapSpan = (text: string, color: string = "#000000") => {
+const wrapSpan = (text: string, color?: string) => {
   const span = document.createElement("span")
-  span.style.color = color
+  if (color) {
+    span.style.color = color
+    span.dataset.colorCode = color
+  }
   span.textContent = text
-  span.dataset.colorCode = color
   return span
 }
 // 清除 font 标签
@@ -381,16 +385,20 @@ onMounted(() => {
                 class="color-swatch"
                 @click="applyColor(color)"
               ></button>
-              <!-- 自定义颜色 -->
+              <button
+                class="color-swatch"
+                style="border: 2px dotted red"
+                @click="applyColor()"
+              ></button>
               <input
                 type="color"
                 @change="
                   applyColor(($event.target as HTMLInputElement).value || '')
                 "
-                class="color-swatch-input"
+                class="color-swatch-input ml-20px"
               />
             </div>
-            <div>
+            <div class="flex-center">
               <SvgIcon
                 name="clear"
                 @click="clearContent"
@@ -542,6 +550,7 @@ onMounted(() => {
   height: 24px;
   cursor: pointer;
   transition: transform 0.2s;
+  box-sizing: border-box;
 
   &:hover {
     transform: scale(1.2);
@@ -554,7 +563,6 @@ onMounted(() => {
 
 .color-swatch-input {
   overflow: hidden;
-  margin-left: 20px;
   padding: 0;
   border: none;
   border-radius: 4px;

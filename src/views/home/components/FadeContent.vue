@@ -19,40 +19,22 @@ const props = {
 }
 
 const elementRef = ref<HTMLDivElement | null>(null)
-let observer: IntersectionObserver | null = null
 
 onMounted(() => {
   const element = elementRef.value
   if (!element) return
 
-  observer = new IntersectionObserver(
-    ([entry]) => {
-      if (entry.isIntersecting) {
-        observer?.unobserve(element)
-
-        const animeProps: AnimationParams = {
-          opacity: [props.initialOpacity, 1],
-          duration: props.duration,
-          easing: props.easing,
-          delay: props.delay,
-        }
-
-        if (props.blur) {
-          animeProps.filter = ["blur(10px)", "blur(0px)"]
-        }
-
-        anime(element, animeProps)
-      }
-    },
-    { threshold: props.threshold },
-  )
-
-  observer.observe(element)
-})
-
-onUnmounted(() => {
-  if (observer) {
-    observer.disconnect()
+  const animeProps: AnimationParams = {
+    opacity: [props.initialOpacity, 1],
+    duration: props.duration,
+    easing: props.easing,
+    delay: props.delay,
   }
+
+  if (props.blur) {
+    animeProps.filter = ["blur(10px)", "blur(0px)"]
+  }
+
+  anime(element, animeProps)
 })
 </script>

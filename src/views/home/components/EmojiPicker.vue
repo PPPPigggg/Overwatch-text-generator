@@ -25,12 +25,29 @@
             class="emoji-item"
             @click="$emit('select', emoji)"
           >
-            <img
+            <a-image
               :src="emoji.url"
+              show-loader
+              :preview="false"
               :alt="emoji.name || emoji.id"
               class="emoji-image"
               loading="lazy"
-            />
+            >
+              <template #loader>
+                <div class="size-100%">
+                  <a-spin>
+                    <template #icon>
+                      <div class="size-100% m-auto text-center">
+                        <img
+                          class="size-70% m-auto"
+                          src="@/assets/images/朱诺loading.gif"
+                        />
+                      </div>
+                    </template>
+                  </a-spin>
+                </div>
+              </template>
+            </a-image>
           </div>
         </div>
       </div>
@@ -223,8 +240,11 @@ onMounted(() => {
   cursor: pointer;
   transition: transform 0.5s;
   overflow: hidden;
-
+  box-sizing: border-box;
+  background-color: #cccccc;
+  box-sizing: border-box;
   transition: all 0.3s;
+  padding: 2px;
 
   &:hover {
     background-color: #ec6516;
@@ -242,10 +262,6 @@ onMounted(() => {
   .emoji-image {
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    box-sizing: border-box;
-    padding: 3px;
-    background-color: #cccccc;
   }
 }
 
