@@ -175,7 +175,12 @@ function nodeToContent(node: DocumentFragment): string {
 
   // 将带颜色的span转换为颜色代码
 
-  const spans = Array.from(node.querySelectorAll("span[data-color-code]"))
+  const spans = Array.from(
+    node.querySelectorAll("span[data-color-code]"),
+  ).filter(
+    (span) => span.textContent && span.textContent.trim() !== "",
+  ) as HTMLElement[]
+
   if (spans.length !== 0) {
     const groups: HTMLElement[][] = []
     let groupSpan = [spans[0] as HTMLElement]
