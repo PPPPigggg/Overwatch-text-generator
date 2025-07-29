@@ -97,7 +97,7 @@ const getLetterTransform = (index: number) => {
 <template>
   <div
     ref="containerRef"
-    :class="`m-0 mx-auto rounded-full w-[100px] h-[100px] relative font-black text-black text-center cursor-pointer origin-center ${props.className}`"
+    :class="`m-0 mx-auto rounded-full w-[100px] h-[100px] relative font-black text-color1 text-center cursor-pointer origin-center ${props.className}`"
     @mouseenter="handleHoverStart"
     @mouseleave="handleHoverEnd"
   >

@@ -229,7 +229,7 @@ canvas {
   border-radius: 16px;
   appearance: auto;
   outline: none;
-  background-color: #1899d6;
+  background-color: rgb(var(--primary-6));
   cursor: pointer;
   user-select: none;
   line-height: 20px;
@@ -252,7 +252,7 @@ canvas {
     border: solid transparent;
     border-width: 0 0 4px;
     border-radius: 16px;
-    background-color: #1cb0f6;
+    background-color: rgb(var(--primary-3));
     background-clip: padding-box;
     content: "";
   }

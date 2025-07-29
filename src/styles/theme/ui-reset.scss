@@ -1,5 +1,11 @@
 body:not(body[arco-theme="dark"]) {
-  --primary-6: 240, 100, 20; // #f06414
+  --primary-6: 240, 100, 20; /* #f06414  (主色) */
+  --primary-1: 255, 242, 229; /* #fff2e5 */
+  --primary-2: 255, 219, 192; /* #ffdbc0 */
+  --primary-3: 255, 196, 154; /* #ffc49a */
+  --primary-4: 255, 163, 104; /* #ffa368 */
+  --primary-5: 255, 138, 68; /* #ff8a44  (hover) */
+  --primary-7: 195, 70, 10; /* #c3460a  (click) */
   --success-6: 0, 180, 42; // #00b42a
   --warning-6: 255, 125, 0; // #ff7d00
   --danger-6: 245, 63, 63; // #f53f3f
