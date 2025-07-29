@@ -15,7 +15,7 @@ export default function () {
     ],
     resolvers: [
       ArcoResolver({
-        sideEffect: false,
+        sideEffect: true,
       }),
     ],
     dirs: ["src/components/*"],

@@ -3,7 +3,6 @@ import App from "./App.vue"
 import { setupRouter } from "./router"
 import { setupStore } from "@/stores"
 import { setupAssets, setupDirectives, setupGlobalMethods } from "@/setup"
-import "@arco-design/web-vue/es/message/style/css.js"
 
 const app = createApp(App)
 

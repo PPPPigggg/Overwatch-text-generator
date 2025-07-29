@@ -1,0 +1,26 @@
+body:not(body[arco-theme="dark"]) {
+  --primary-6: 240, 100, 20; // #f06414
+  --success-6: 0, 180, 42; // #00b42a
+  --warning-6: 255, 125, 0; // #ff7d00
+  --danger-6: 245, 63, 63; // #f53f3f
+  --color-border-1: #f7f8fa;
+  --color-border-2: #f2f3f5;
+  --color-border-3: #e5e6eb;
+  --color-border-4: #ccc;
+  --color-fill-1: #f7f8fa;
+  --color-fill-2: #e5e6eb;
+  --color-fill-3: #ccc;
+  --color-fill-4: #86909c;
+  --color-text-1: #1d2129;
+  --color-text-2: #4e5969;
+  --color-text-3: #86909c;
+  --color-text-4: #ccc;
+  --color-bg-1: #f8f4f1;
+  --color-bg-2: #fff;
+  --color-bg-3: #fff;
+  --color-bg-4: #fff;
+  --color-bg-5: #fff;
+  --shadow1-center: 0 -2px 5px rgb(0 0 0 / 10%);
+  --shadow2-center: 0 0 10px rgb(0 0 0 / 10%);
+  --shadow3-center: 0 0 20px rgb(0 0 0 / 10%);
+}

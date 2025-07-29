@@ -8,64 +8,105 @@
         type="text"
         class="search-input"
         :data="classification"
+        allow-clear
       />
-      <div class="font-size-12px text-gray">键入 @ 符号可按分类搜索</div>
+      <div class="font-size-12px text-gray py-2">键入 @ 符号可按分类搜索</div>
     </div>
 
-    <!-- 虚拟滚动容器 -->
-    <div ref="containerRef" class="emoji-container" @scroll="handleScroll">
-      <div class="emoji-list" :style="{ height: `${totalHeight}px` }">
-        <div
-          class="emoji-row"
-          :style="{ transform: `translateY(${startOffset}px)` }"
-        >
-          <div
-            v-for="emoji in visibleEmojis"
-            :key="emoji.id"
-            class="emoji-item"
-            @click="$emit('select', emoji)"
-          >
-            <a-image
-              :src="emoji.url"
-              show-loader
-              :preview="false"
-              :alt="emoji.name || emoji.id"
-              class="emoji-image"
-              loading="lazy"
-            >
-              <template #loader>
-                <div class="size-100%">
-                  <a-spin>
-                    <template #icon>
-                      <div class="size-100% m-auto text-center">
-                        <img
-                          class="size-70% m-auto"
-                          src="@/assets/images/朱诺loading.gif"
-                        />
+    <a-list
+      class="emoji-container"
+      :virtualListProps="{
+        height: defaultContainerHeight,
+        fixedSize: true,
+      }"
+      size="small"
+      :bordered="false"
+      :split="false"
+      :data="emojiList"
+      @contextmenu.prevent
+      scrollbar
+    >
+      <template #item="{ item, index }">
+        <a-list-item :key="index" class="emoji-list-item">
+          <div class="emoji-row">
+            <template v-for="emojiItem in item" :key="emojiItem.id">
+              <a-popconfirm
+                content="是否移除收藏？"
+                :disabled="!userStateStore.topEmojis.includes(emojiItem.id)"
+                trigger="contextMenu"
+                @ok="removeEmoji(emojiItem.id)"
+                @contextmenu.prevent="
+                  userStateStore.topEmojis.includes(emojiItem.id)
+                    ? void 0
+                    : addEmoji(emojiItem.id)
+                "
+              >
+                <div class="emoji-item" @click="$emit('select', emojiItem)">
+                  <a-image
+                    :src="emojiItem.url"
+                    show-loader
+                    :preview="false"
+                    :alt="emojiItem.name || emojiItem.id"
+                    class="emoji-image"
+                    loading="lazy"
+                  >
+                    <template #loader>
+                      <div class="size-100%">
+                        <a-spin>
+                          <template #icon>
+                            <div class="size-100% m-auto text-center">
+                              <img
+                                class="size-70% m-auto"
+                                src="@/assets/images/朱诺loading.gif"
+                              />
+                            </div>
+                          </template>
+                        </a-spin>
                       </div>
                     </template>
-                  </a-spin>
+                  </a-image>
                 </div>
-              </template>
-            </a-image>
+              </a-popconfirm>
+            </template>
           </div>
-        </div>
-      </div>
-    </div>
+        </a-list-item>
+      </template>
+    </a-list>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue"
+import { ref, computed, onMounted } from "vue"
 import type { IEmojiItem } from "../type"
+import { useUserStore } from "@/stores/modules/state"
+
+const userStateStore = useUserStore()
+const { addEmoji, removeEmoji } = userStateStore
+
+function changeEmojis(emojiItem: IEmojiItem) {
+  // if (userStateStore.topEmojis.includes(emojiItem.id)) {
+  //   removeEmoji(emojiItem.id)
+  // } else {
+  //   addEmoji(emojiItem.id)
+  // }
+}
 
 interface Props {
   emojis: IEmojiItem[]
 }
 
-const defaultItemSize = 30
-const defaultItemsPerRow = 8
+const defaultItemsPerRow = 7 // 每行显示的表情数量
 const defaultContainerHeight = 400
+
+function listToRows(list: IEmojiItem[]) {
+  const rows = Math.ceil(list.length / defaultItemsPerRow)
+  return Array.from({ length: rows }, (_, rowIndex) =>
+    list.slice(
+      rowIndex * defaultItemsPerRow,
+      (rowIndex + 1) * defaultItemsPerRow,
+    ),
+  )
+}
 
 const addPx = (value: number) => `${value}px`
 
@@ -83,8 +124,6 @@ const classification = computed(() =>
 )
 
 const searchQuery = ref("")
-const containerRef = ref<HTMLElement>()
-const scrollTop = ref(0)
 
 // 过滤后的表情
 const filteredEmojis = computed(() => {
@@ -135,86 +174,38 @@ const filteredEmojis = computed(() => {
   })
 })
 
-// 计算行数
-const totalRows = computed(() =>
-  Math.ceil(filteredEmojis.value.length / defaultItemsPerRow),
-)
-
-// 总高度
-const totalHeight = computed(() => totalRows.value * defaultItemSize)
-
-// 可见区域的行数
-const visibleRowCount = computed(
-  () => Math.ceil(defaultContainerHeight / defaultItemSize) + 2,
-)
-
-// 开始行索引
-const startRowIndex = computed(() =>
-  Math.max(0, Math.floor(scrollTop.value / defaultItemSize) - 1),
-)
-
-// 结束行索引
-const endRowIndex = computed(() =>
-  Math.min(totalRows.value - 1, startRowIndex.value + visibleRowCount.value),
-)
-
-// 可见的表情
-const visibleEmojis = computed(() => {
-  const start = startRowIndex.value * defaultItemsPerRow
-  const end = (endRowIndex.value + 1) * defaultItemsPerRow
-  return filteredEmojis.value.slice(start, end)
-})
-
-// 偏移量
-const startOffset = computed(() => startRowIndex.value * defaultItemSize)
-
-// 处理滚动
-const handleScroll = (event: Event) => {
-  const target = event.target as HTMLElement
-  scrollTop.value = target.scrollTop
-}
-
-onMounted(() => {
-  // 重置滚动位置
-  if (containerRef.value) {
-    containerRef.value.scrollTop = 0
-  }
+const emojiList = computed(() => {
+  const emojis = filteredEmojis.value
+  return listToRows(emojis)
 })
 </script>
 
 <style lang="scss" scoped>
 .emoji-picker {
-  overflow: hidden;
+  border: 1px solid var(--border-color-3);
   border-radius: 8px;
-  background: white;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+  background: var(--bg-color-2);
+  box-shadow: var(--shadow-color-2);
 }
 
 .search-container {
   padding: 12px;
   padding-bottom: 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color-3);
 }
 
 .search-input {
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
   border-radius: 6px;
   width: 100%;
   outline: none;
   font-size: 14px;
   transition: border-color 0.2s;
-
-  &:focus {
-    border-color: #3b82f6;
-  }
 }
 
 .emoji-container {
-  min-width: 200px;
-  overflow-y: auto;
   position: relative;
-  height: v-bind(addPx(defaultContainerHeight));
+  min-width: 200px;
 }
 
 .emoji-list {
@@ -222,64 +213,59 @@ onMounted(() => {
   width: 100%;
 }
 
-.emoji-row {
-  display: grid;
-  padding: 4px 8px;
-  width: auto;
-  grid-template-columns: repeat(v-bind(defaultItemsPerRow), 1fr);
-  gap: 4px;
-}
+.emoji-list-item {
+  $gap: 8px;
 
-.emoji-item {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 6px;
-  width: v-bind(addPx(defaultItemSize));
-  height: v-bind(addPx(defaultItemSize));
-  cursor: pointer;
-  transition: transform 0.5s;
-  overflow: hidden;
-  box-sizing: border-box;
-  background-color: #cccccc;
-  box-sizing: border-box;
-  transition: all 0.3s;
-  padding: 2px;
+  padding: $gap $gap 0 !important;
 
-  &:hover {
-    background-color: #ec6516;
-    box-shadow: 0 0 20px #ec651650;
-    transform: scale(1.1);
+  &:first-child {
+    padding-top: $gap !important;
   }
 
-  &:active {
-    background-color: #ec6516;
-    box-shadow: none;
-    transform: scale(0.98);
-    transition: all 0.25s;
+  .emoji-row {
+    display: flex;
+    width: auto;
+    /* stylelint-disable */
+    grid-template-columns: repeat(v-bind(defaultItemsPerRow), 1fr);
+    gap: $gap;
   }
 
-  .emoji-image {
-    width: 100%;
-    height: 100%;
+  .emoji-item {
+    display: flex;
+    overflow: hidden;
+    justify-content: center;
+    box-sizing: border-box;
+    align-items: center;
+    padding: 2px;
+    border-radius: 6px;
+    width: 35px;
+    height: 35px;
+    background-color: var(--fill-color-3);
+    cursor: pointer;
+    transition: background-color 0.25s;
+
+    &:hover {
+      background-color: #f06414;
+    }
+
+    .emoji-image {
+      width: 100%;
+      height: 100%;
+      transition: all 0.3s;
+
+      &:hover {
+        transform: scale(1.2);
+      }
+
+      &:active {
+        transform: scale(0.98);
+        transition: all 0.25s;
+      }
+    }
   }
 }
 
-/* 滚动条样式 */
-.emoji-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.emoji-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.emoji-container::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background: #c1c1c1;
-}
-
-.emoji-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+body[arco-theme="dark"] .emoji-item {
+  background: var(--bg-color-5);
 }
 </style>

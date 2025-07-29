@@ -195,20 +195,20 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .error-container {
-  width: 100vw;
-  height: 100vh;
   display: flex;
+  overflow: hidden;
+  position: relative;
   justify-content: center;
   align-items: center;
-  position: relative;
-  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
   cursor: none; /* 隐藏默认鼠标 */
 }
 
 canvas {
   position: absolute;
-  top: 0;
   left: 0;
+  top: 0;
   z-index: 0;
 }
 
@@ -219,46 +219,42 @@ canvas {
 }
 
 .error-link {
-  appearance: button;
-  background-color: #1899d6;
-  border: solid transparent;
-  border-radius: 16px;
-  border-width: 0 0 4px;
-  box-sizing: border-box;
-  color: #ffffff;
-  cursor: pointer;
   display: inline-block;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  line-height: 20px;
-  margin: 0;
-  outline: none;
   overflow: visible;
+  box-sizing: border-box;
+  margin: 0;
   padding: 13px 19px;
+  border: solid transparent;
+  border-width: 0 0 4px;
+  border-radius: 16px;
+  appearance: auto;
+  outline: none;
+  background-color: #1899d6;
+  cursor: pointer;
+  user-select: none;
+  line-height: 20px;
+  vertical-align: middle;
   text-align: center;
   text-transform: uppercase;
-  touch-action: manipulation;
+  font-weight: 700;
+  font-size: 20px;
+  color: #fff;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
   transform: translateZ(0);
   transition: filter 0.2s;
-  user-select: none;
-  -webkit-user-select: none;
-  vertical-align: middle;
-  white-space: nowrap;
+  touch-action: manipulation;
 
-  &:after {
-    background-clip: padding-box;
-    background-color: #1cb0f6;
-    border: solid transparent;
-    border-radius: 16px;
-    border-width: 0 0 4px;
-    bottom: -4px;
-    content: "";
-    left: 0;
+  &::after {
     position: absolute;
-    right: 0;
-    top: 0;
+    inset: 0 0 -4px;
     z-index: -1;
+    border: solid transparent;
+    border-width: 0 0 4px;
+    border-radius: 16px;
+    background-color: #1cb0f6;
+    background-clip: padding-box;
+    content: "";
   }
 
   &:main,
@@ -274,8 +270,8 @@ canvas {
     cursor: auto;
   }
 
-  &:active:after {
-    border-width: 0 0 0px;
+  &:active::after {
+    border-width: 0;
   }
 
   &:active {

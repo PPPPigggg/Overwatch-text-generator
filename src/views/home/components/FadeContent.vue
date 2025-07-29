@@ -1,5 +1,5 @@
 <template>
-  <div ref="elementRef" :style="{ opacity: props.initialOpacity }">
+  <div ref="elementRef">
     <slot />
   </div>
 </template>
@@ -8,7 +8,7 @@
 import { ref, onMounted, onUnmounted } from "vue"
 import { animate as anime, type AnimationParams } from "animejs"
 
-const props = {
+const props = reactive({
   blur: true,
   duration: 400,
   easing: "ease-out",
@@ -16,7 +16,7 @@ const props = {
   threshold: 0.1,
   initialOpacity: 0,
   className: "",
-}
+})
 
 const elementRef = ref<HTMLDivElement | null>(null)
 

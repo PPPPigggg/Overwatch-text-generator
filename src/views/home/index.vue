@@ -7,10 +7,35 @@ import SvgIcon from "@/components/svg-icon"
 import { ref } from "vue"
 import { copyText } from "@/utils/copy"
 import { useFetch } from "@vueuse/core"
-import { Message } from "@arco-design/web-vue"
+import { useUserStore } from "@/stores/modules/state"
 import type { IEmojiItem } from "./type"
+import { storeToRefs } from "pinia"
 
-const { data: emojis } = useFetch("./textures.json").json<IEmojiItem[]>()
+const userStateStore = useUserStore()
+
+const { addEmoji, removeEmoji, iKnowTip } = userStateStore
+const { topEmojis, knowTip } = storeToRefs(userStateStore)
+
+function removeConfirm(id: string) {
+  removeEmoji(id)
+  setTimeout(() => {
+    iKnowTip()
+  }, 1000)
+}
+
+const { data: emojis, isFetching: emojisLoading } =
+  useFetch("./textures.json").json<IEmojiItem[]>()
+
+const topEmojiList = computed(() => {
+  if (!emojis.value) return []
+  // return emojis.value.filter((emoji) => topEmojis.value.includes(emoji.id))
+  return topEmojis.value
+    .map((id) => {
+      const emoji = emojis.value?.find((e) => e.id === id)
+      return emoji
+    })
+    .filter(Boolean) as IEmojiItem[]
+})
 
 // 编辑器 DOM 引用
 const editorRef = ref<HTMLDivElement | null>(null)
@@ -36,7 +61,7 @@ const colors = [
   "#000000",
 ]
 
-// 插入表情
+// 插入图标
 const insertEmoji = (emoji: IEmojiItem) => {
   editorRef.value?.focus()
 
@@ -140,7 +165,7 @@ const copyContent = async () => {
   copyText(resultText)
 }
 function nodeToContent(node: DocumentFragment): string {
-  // 将表情图片替换为代码
+  // 将图标图片替换为代码
   node.querySelectorAll("img[data-emoji-code]").forEach((img) => {
     const code = (img as HTMLElement).dataset.emojiCode
     if (code) {
@@ -193,7 +218,7 @@ function contentToNode(textContent: string): DocumentFragment {
   const fragment = document.createDocumentFragment()
   let currentIndex = 0
 
-  // 匹配表情和颜色代码（包括结束标签）
+  // 匹配图标和颜色代码（包括结束标签）
   const formatPattern =
     /(<TXC[0-9A-Fa-f]+>)|(<FG([0-9A-Fa-f]{6})FF>(.*?)<\/FG[0-9A-Fa-f]{6}FF>)/g
 
@@ -209,7 +234,7 @@ function contentToNode(textContent: string): DocumentFragment {
     }
 
     if (match[1]) {
-      // 处理表情
+      // 处理图标
       const emoji = emojis.value?.find((e) => genEmojisCode(e.id) === match[1])
       if (emoji) {
         const img = document.createElement("img")
@@ -353,17 +378,57 @@ onMounted(() => {
 <template>
   <div class="w-100vw h-100vh overflow-y-auto flex-center select-none">
     <FadeContent>
-      <div>
-        <!-- 表情选择栏 -->
-        <div class="emoji-bar">
-          <img
-            v-for="emoji in emojis?.filter((e) => e.isTop) || []"
-            :key="emoji.id"
-            :src="emoji.url"
-            :alt="emoji.name"
-            @click="insertEmoji(emoji)"
-            class="emoji"
+      <div class="relative">
+        <!-- 图标选择栏 -->
+        <div class="emoji-bar" @contextmenu.prevent>
+          <Transition name="fade">
+            <p class="tip-text flex-center" v-if="!knowTip">
+              <icon-info-circle class="mr-1" />
+              <span>右键点击图标可【收藏】/【取消收藏】图标</span>
+            </p>
+          </Transition>
+          <a-spin class="emoji-bar-empty" v-if="emojisLoading">
+            <template #icon>
+              <div class="size-100px m-auto text-center">
+                <img
+                  class="w-100% m-auto"
+                  src="@/assets/images/哈蒙德loading.gif"
+                />
+              </div>
+            </template>
+          </a-spin>
+          <template v-else-if="topEmojiList.length > 0">
+            <TransitionGroup name="emoji-list">
+              <div v-for="topEmojiItem in topEmojiList" :key="topEmojiItem.id">
+                <a-popconfirm
+                  content="是否移除收藏？"
+                  :disabled="!topEmojis.includes(topEmojiItem.id)"
+                  trigger="contextMenu"
+                  @ok="removeConfirm(topEmojiItem.id)"
+                  @contextmenu.prevent="
+                    topEmojis.includes(topEmojiItem.id)
+                      ? void 0
+                      : addEmoji(topEmojiItem.id)
+                  "
+                >
+                  <img
+                    :src="topEmojiItem.url"
+                    :alt="topEmojiItem.name"
+                    @click="insertEmoji(topEmojiItem)"
+                    class="emoji"
+                  />
+                </a-popconfirm>
+              </div>
+            </TransitionGroup>
+          </template>
+          <a-empty
+            v-else
+            class="emoji-bar-empty"
+            description="右键点击图标可【收藏】/【取消收藏】图标"
           />
+          <!-- 占位 -->
+          <div class="emoji" style="visibility: hidden"></div>
+
           <a-trigger
             trigger="click"
             :unmount-on-close="false"
@@ -372,7 +437,7 @@ onMounted(() => {
             position="right"
             :animation-name="popAnimation"
           >
-            <div class="more-btn emoji">
+            <div class="more-btn emoji" key="more">
               <SvgIcon name="more" color="#fff"></SvgIcon>
               <div class="demo-basic"></div>
             </div>
@@ -385,6 +450,7 @@ onMounted(() => {
             </template>
           </a-trigger>
         </div>
+
         <div class="rich-input-container">
           <div class="rich-input-container-inner">
             <!-- 输入框 -->
@@ -423,12 +489,11 @@ onMounted(() => {
               />
             </div>
             <div class="flex-center">
-              <SvgIcon
-                name="clear"
+              <IconDelete
                 @click="clearContent"
-                class="clear-btn mr-3"
-              ></SvgIcon>
-              <SvgIcon name="copy" @click="copyContent" class="copy-btn" />
+                class="text-24px cursor-pointer mr-3"
+              />
+              <IconCopy @click="copyContent" class="text-24px cursor-pointer" />
             </div>
           </div>
         </div>
@@ -447,15 +512,33 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+/* .height-fade- */
+
+.emoji-list-move, /* 对移动中的元素应用的过渡 */
+.emoji-list-enter-active,
+.emoji-list-leave-active {
+  transition: all 0.5s ease;
+}
+
+.emoji-list-enter-from,
+.emoji-list-leave-to {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+/* 确保将离开的元素从布局流中删除
+  以便能够正确地计算移动的动画。 */
+.emoji-list-leave-active {
+  position: absolute;
+}
+
 .rich-input-container,
 .emoji-bar {
   margin: auto;
   padding: 0.375rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color-4);
   border-radius: 28px;
   width: 40vw;
-  box-shadow: rgb(0 0 0 / 6%) 0 42px 30px 0;
-  box-shadow: rgb(255 255 255) 0 0 0 1px inset;
   box-shadow: var(--shadow-color-3);
   font-family:
     Ginto, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
@@ -469,6 +552,13 @@ onMounted(() => {
   }
 }
 
+.tip-text {
+  position: absolute;
+  top: -40px;
+  font-size: 14px;
+  color: var(--text-color-3);
+}
+
 .emoji-bar {
   display: grid;
   position: relative;
@@ -476,6 +566,11 @@ onMounted(() => {
   padding: 15px;
   gap: 5px;
   grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+
+  .emoji-bar-empty {
+    /* 在grid中占满 */
+    grid-column: 1 / -1;
+  }
 
   .more-btn {
     display: flex;
@@ -485,7 +580,7 @@ onMounted(() => {
     justify-content: center;
     align-items: center;
     border-radius: 50%;
-    background-color: #ec6516 !important;
+    background-color: #f06414 !important;
     cursor: pointer;
     color: white;
   }
@@ -496,7 +591,7 @@ onMounted(() => {
     border-radius: 999px;
     width: 30px;
     height: 30px;
-    background: #cccccc;
+    background: var(--fill-color-3);
     cursor: pointer;
 
     /* 禁止图片可以被拖动 */
@@ -505,18 +600,30 @@ onMounted(() => {
     transition: all 0.3s;
 
     &:hover {
-      background-color: #ec6516;
-      box-shadow: 0 0 20px #ec651650;
+      background-color: #f06414;
+      box-shadow: 0 0 20px #f0641450;
       transform: scale(1.1);
     }
 
     &:active {
-      background-color: #ec6516;
+      background-color: #f06414;
       box-shadow: none;
       transform: scale(0.98);
       transition: all 0.25s;
     }
   }
+}
+
+body[arco-theme="dark"] .emoji {
+  background: var(--bg-color-5);
+}
+
+body[arco-theme="dark"] .editor {
+  background-image: linear-gradient(
+    to bottom,
+    var(--bg-color-2),
+    var(--bg-color-1)
+  );
 }
 
 .editor {
@@ -538,7 +645,7 @@ onMounted(() => {
     padding: 2px;
     width: 20px;
     height: 20px;
-    background: #cccccc;
+    background: var(--fill-color-3);
 
     /* 禁止图片可以被拖动 */
     -webkit-user-drag: none;
@@ -567,21 +674,22 @@ onMounted(() => {
 }
 
 .color-swatch {
+  box-sizing: border-box;
   padding: 0;
   border-style: none;
   border-radius: 4px;
   width: 24px;
   height: 24px;
+  background: var(--bg-color-1);
   cursor: pointer;
   transition: transform 0.2s;
-  box-sizing: border-box;
 
   &:hover {
     transform: scale(1.2);
   }
 
   &:active {
-    border: 2px solid #ccc;
+    border: 2px solid var(--border-color-4);
   }
 }
 
@@ -610,14 +718,6 @@ onMounted(() => {
     border: none;
     border-radius: 4px;
   }
-}
-
-.copy-btn,
-.clear-btn {
-  border-radius: 4px;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
 }
 
 /* 媒体查询如果是移动设备 */

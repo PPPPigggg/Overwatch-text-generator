@@ -1,9 +1,12 @@
 <script lang="ts" setup>
-// import Tabbar from "./components/Tabbar.vue"
+import LightOrDark from "./components/lightOrDark/index.vue"
 </script>
 
 <template>
   <div class="content">
+    <div class="setting-header">
+      <LightOrDark />
+    </div>
     <slot></slot>
   </div>
 </template>
@@ -15,6 +18,17 @@
   flex-direction: column;
   height: 100%;
 
-  background-color: rgb(248 244 241 /1) /* #f8f4f1 */;
+  .setting-header {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 1000;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 16px;
+    height: 60px;
+  }
 }
 </style>
