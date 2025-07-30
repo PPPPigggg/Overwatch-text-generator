@@ -15,5 +15,13 @@ export default [
     },
     component: () => import("@/views/home/index.vue"),
   },
+  // {
+  //   name: "TestPage",
+  //   path: "/test-page",
+  //   meta: {
+  //     title: import.meta.env.VITE_APP_TITLE,
+  //   },
+  //   component: () => import("@/views/test-page/index.vue"),
+  // },
   ...errRoutes,
 ] as RouteRecordRaw[]

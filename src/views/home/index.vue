@@ -98,7 +98,6 @@ const applyColor = (color?: string) => {
 
         Array.from(el.textContent || "").forEach((char) => {
           const span = wrapSpan(char, color)
-          el.replaceWith(span) // 替换原有的文本节点
           spans.appendChild(span)
         })
 
@@ -107,19 +106,17 @@ const applyColor = (color?: string) => {
 
       const commonContainer = range.commonAncestorContainer
 
+      const parentNode = commonContainer.parentNode as HTMLElement | null
       if (
         commonContainer.nodeType === Node.TEXT_NODE &&
-        commonContainer.parentElement?.nodeName === "SPAN" &&
-        commonContainer.parentElement.dataset.colorCode
+        parentNode &&
+        parentNode.nodeName === "SPAN"
       ) {
-        commonContainer.parentElement.remove()
+        parentNode.parentNode?.insertBefore(renderEl, parentNode.nextSibling)
+      } else {
+        range.insertNode(renderEl)
+        // Select the newly inserted content
       }
-
-      range.insertNode(renderEl)
-
-      // range.collapse()
-      // selection.removeAllRanges()
-      // selection.addRange(range)
     }
   }
 }
@@ -467,6 +464,7 @@ onMounted(() => {
               @paste="handlePaste"
               @copy="handleCopy"
               @cut="handleCut"
+              @drogstart.prevent
             ></div>
           </div>
           <!-- 功能栏 -->
