@@ -96,8 +96,9 @@ export const useUserStore = defineStore("userState", {
       }
     },
     addTemplateText(text: string) {
+      if (!text) return
       if (!this.templateTextList.includes(text)) {
-        this.templateTextList.push(text)
+        this.templateTextList.unshift(text)
       }
     },
     removeTemplateText(text: string) {

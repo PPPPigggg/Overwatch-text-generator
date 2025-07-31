@@ -1,4 +1,3 @@
-import "virtual:svg-icons-register"
 import "uno.css"
 import "@/styles/index.scss"
 import vConsole from "vconsole"

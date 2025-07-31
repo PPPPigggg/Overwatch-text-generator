@@ -3,18 +3,19 @@ import CircularText from "./components/CircularText.vue"
 import EmojiPicker from "./components/EmojiPicker.vue"
 import FadeContent from "./components/FadeContent.vue"
 
-import SvgIcon from "@/components/svg-icon"
 import { useUserStore } from "@/stores/modules/state"
 import { copyText } from "@/utils/copy"
 import { useFetch } from "@vueuse/core"
 import { storeToRefs } from "pinia"
 import { ref } from "vue"
 import type { IEmojiItem } from "./type"
+import { Modal } from "@arco-design/web-vue"
 
 const userStateStore = useUserStore()
 
-const { addEmoji, removeEmoji, iKnowTip } = userStateStore
-const { topEmojis, knowTip } = storeToRefs(userStateStore)
+const { addEmoji, removeEmoji, iKnowTip, addTemplateText, removeTemplateText } =
+  userStateStore
+const { topEmojis, knowTip, templateTextList } = storeToRefs(userStateStore)
 
 function removeConfirm(id: string) {
   removeEmoji(id)
@@ -175,19 +176,6 @@ function clearFont(e: InputEvent) {
   })
 }
 
-// 复制内容
-function copyContent() {
-  if (!editorRef.value) return
-
-  const contentClone = document.createDocumentFragment()
-  Array.from(editorRef.value.cloneNode(true).childNodes).forEach((node) => {
-    contentClone.appendChild(node)
-  })
-  const resultText = toContent(contentClone)
-
-  copyText(resultText)
-}
-
 /* 节点转换为对应代码 */
 function toContent(node: DocumentFragment): string {
   const elList = Array.from(node.childNodes) as HTMLElement[]
@@ -303,6 +291,52 @@ function toNode(textContent: string): DocumentFragment {
   return fragment
 }
 
+// 清空内容
+// function clearContent() {
+//   if (editorRef.value) {
+//     editorRef.value.innerHTML = ""
+//   }
+// }
+
+// 保存模板文本
+function saveTemplateText() {
+  if (!editorRef.value) return
+
+  const contentClone = document.createDocumentFragment()
+  Array.from(editorRef.value.cloneNode(true).childNodes).forEach((node) => {
+    contentClone.appendChild(node)
+  })
+  const resultText = toContent(contentClone)
+
+  addTemplateText(resultText)
+}
+// 移除模板文本
+function delTemplateText(text: string) {
+  Modal.open({
+    title: "提示",
+    content: "确认移除模板吗？",
+    cancelText: "取消",
+    closable: true,
+    width: 300,
+    onOk: () => {
+      removeTemplateText(text)
+    },
+  })
+}
+
+// 全部复制
+function copyContent() {
+  if (!editorRef.value) return
+
+  const contentClone = document.createDocumentFragment()
+  Array.from(editorRef.value.cloneNode(true).childNodes).forEach((node) => {
+    contentClone.appendChild(node)
+  })
+  const resultText = toContent(contentClone)
+
+  copyText(resultText)
+}
+
 // 处理复制事件
 function handleCopy(e: ClipboardEvent) {
   e.preventDefault()
@@ -403,13 +437,6 @@ function insertNodeAtCursor(node: DocumentFragment) {
   selection.addRange(range)
 }
 
-// 清空内容
-function clearContent() {
-  if (editorRef.value) {
-    editorRef.value.innerHTML = ""
-  }
-}
-
 const popAnimation = ref("zoom-in-left")
 const popEmojiOffset = ref(20)
 // 当前宽度小于700px时，使用zoom -in -right动画
@@ -432,7 +459,7 @@ onMounted(() => {
 <template>
   <div class="w-100vw h-100vh overflow-y-auto flex-center select-none">
     <FadeContent>
-      <div class="relative">
+      <div class="content-box">
         <!-- 图标选择栏 -->
         <div class="emoji-bar" @contextmenu.prevent>
           <Transition name="fade">
@@ -453,7 +480,11 @@ onMounted(() => {
           </a-spin>
           <template v-else-if="topEmojiList.length > 0">
             <TransitionGroup name="emoji-list">
-              <div v-for="topEmojiItem in topEmojiList" :key="topEmojiItem.id">
+              <div
+                v-for="topEmojiItem in topEmojiList"
+                :key="topEmojiItem.id"
+                class="flex-center"
+              >
                 <a-popconfirm
                   content="是否移除收藏？"
                   :disabled="!topEmojis.includes(topEmojiItem.id)"
@@ -492,7 +523,7 @@ onMounted(() => {
             :animation-name="popAnimation"
           >
             <div class="more-btn emoji" key="more">
-              <SvgIcon name="more" color="#fff"></SvgIcon>
+              <ion:more style="color: white"></ion:more>
               <div class="demo-basic"></div>
             </div>
             <template #content>
@@ -519,38 +550,60 @@ onMounted(() => {
               @cut="handleCut"
               @drogstart.prevent
             ></div>
+            <!-- 功能栏 -->
+            <div class="toolbar">
+              <div class="color-picker">
+                <!-- 预设颜色 -->
+                <button
+                  v-for="color in colors"
+                  :key="color"
+                  :style="{ backgroundColor: color }"
+                  class="color-swatch"
+                  @click="applyColor(color)"
+                ></button>
+                <button
+                  class="color-swatch"
+                  style="border: 2px dotted red"
+                  @click="applyColor()"
+                ></button>
+                <input
+                  type="color"
+                  @change="
+                    applyColor(($event.target as HTMLInputElement).value || '')
+                  "
+                  class="color-swatch-input ml-20px"
+                />
+              </div>
+              <div class="flex-center action-buttons">
+                <div
+                  @click="saveTemplateText"
+                  class="text-28px cursor-pointer mr-3"
+                >
+                  <ion:add style="color: var(--color-text-1)" />
+                </div>
+                <div @click="copyContent" class="text-24px cursor-pointer">
+                  <ion:copy-outline style="color: var(--color-text-1)" />
+                </div>
+              </div>
+            </div>
           </div>
-          <!-- 功能栏 -->
-          <div class="toolbar">
-            <div class="color-picker">
-              <!-- 预设颜色 -->
-              <button
-                v-for="color in colors"
-                :key="color"
-                :style="{ backgroundColor: color }"
-                class="color-swatch"
-                @click="applyColor(color)"
-              ></button>
-              <button
-                class="color-swatch"
-                style="border: 2px dotted red"
-                @click="applyColor()"
-              ></button>
-              <input
-                type="color"
-                @change="
-                  applyColor(($event.target as HTMLInputElement).value || '')
-                "
-                class="color-swatch-input ml-20px"
-              />
-            </div>
-            <div class="flex-center">
-              <IconDelete
-                @click="clearContent"
-                class="text-24px cursor-pointer mr-3"
-              />
-              <IconCopy @click="copyContent" class="text-24px cursor-pointer" />
-            </div>
+        </div>
+        <div class="template-bar">
+          <div class="template-text">
+            <TransitionGroup name="template-list">
+              <div
+                v-for="text in templateTextList"
+                :key="text"
+                class="template-text-item"
+                @click="copyText(text)"
+              >
+                <span>{{ text }}</span>
+                <ion:close-circle
+                  @click.stop="delTemplateText(text)"
+                  class="template-remove-icon"
+                ></ion:close-circle>
+              </div>
+            </TransitionGroup>
           </div>
         </div>
       </div>
@@ -566,9 +619,30 @@ onMounted(() => {
     </div>
   </div>
 </template>
+<style lang="scss">
+.modal-body {
+  text-align: center;
+}
+</style>
 
 <style lang="scss" scoped>
-/* .height-fade- */
+.template-list-move, /* 对移动中的元素应用的过渡 */
+.template-list-enter-active,
+.template-list-leave-active {
+  transition: all 0.5s ease;
+}
+
+.template-list-enter-from,
+.template-list-leave-to {
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* 确保将离开的元素从布局流中删除
+  以便能够正确地计算移动的动画。 */
+.template-list-leave-active {
+  position: absolute;
+}
 
 .emoji-list-move, /* 对移动中的元素应用的过渡 */
 .emoji-list-enter-active,
@@ -588,13 +662,18 @@ onMounted(() => {
   position: absolute;
 }
 
+.content-box {
+  position: relative;
+  margin-top: -30px;
+  width: min(calc(100vw - 1.5rem), 46.5rem);
+}
+
 .rich-input-container,
 .emoji-bar {
   margin: auto;
   padding: 0.375rem;
-  border: 1px solid var(--border-color-4);
+  border: 2px solid var(--border-color-1);
   border-radius: 28px;
-  width: 40vw;
   box-shadow: var(--shadow-color-3);
   font-family:
     Ginto, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
@@ -604,8 +683,22 @@ onMounted(() => {
 
   .rich-input-container-inner {
     overflow: hidden;
-    border-radius: 28px;
+    border-radius: 24px;
+    background-image: linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 90%),
+      rgb(255 255 255 / 0%)
+    );
+    background-repeat: no-repeat;
   }
+}
+
+body[arco-theme="dark"] .rich-input-container-inner {
+  background-image: linear-gradient(
+    to bottom,
+    var(--bg-color-2),
+    var(--bg-color-1)
+  );
 }
 
 .tip-text {
@@ -616,12 +709,14 @@ onMounted(() => {
 }
 
 .emoji-bar {
+  $emoji-size: 35px;
+
   display: grid;
   position: relative;
   margin-bottom: 15px;
   padding: 15px;
   gap: 5px;
-  grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax($emoji-size, 1fr));
 
   .emoji-bar-empty {
     /* 在grid中占满 */
@@ -645,8 +740,8 @@ onMounted(() => {
     box-sizing: border-box;
     padding: 2px;
     border-radius: 999px;
-    width: 30px;
-    height: 30px;
+    width: $emoji-size;
+    height: $emoji-size;
     background: var(--fill-color-3);
     cursor: pointer;
 
@@ -674,37 +769,25 @@ body[arco-theme="dark"] .emoji {
   background: var(--bg-color-5);
 }
 
-body[arco-theme="dark"] .editor {
-  background-image: linear-gradient(
-    to bottom,
-    var(--bg-color-2),
-    var(--bg-color-1)
-  );
-}
-
 .editor {
   overflow: auto;
   padding: 0.6875rem 1rem;
-  min-height: 120px;
+  min-height: 100px;
   max-height: 50vh;
   outline: none;
-  background-image: linear-gradient(
-    to bottom,
-    rgb(255 255 255 / 90%),
-    rgb(255 255 255 / 0%)
-  );
   line-height: 1.6;
-  font-size: 16px;
+  font-size: 17px;
 
   :deep(img) {
     margin: 0 2px;
     padding: 2px;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     background: var(--fill-color-3);
 
     /* 禁止图片可以被拖动 */
     -webkit-user-drag: none;
+    vertical-align: top;
   }
 
   &:empty::before {
@@ -776,26 +859,81 @@ body[arco-theme="dark"] .editor {
   }
 }
 
-/* 媒体查询如果是移动设备 */
-@media (width <= 700px) {
-  .rich-input-container,
-  .emoji-bar {
-    width: 90vw;
+.template-bar {
+  display: flex;
+  position: absolute;
+  left: 0;
+  right: 0;
+  flex-direction: column;
+  margin: auto;
+  margin-top: 12px;
+  padding-bottom: 100px;
+  width: 100%;
+
+  .template-text {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
   }
 
+  .template-text-item {
+    position: relative;
+    box-sizing: border-box;
+    padding: 8px 6px;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow:
+      0 0 #0000,
+      0 0 #0000,
+      0 0 #0000,
+      0 0 #0000,
+      0 1px 3px 0 rgb(0 0 0 / 20%),
+      0 0.5px 0.5px 0.5px #fff inset;
+    cursor: pointer;
+    -webkit-user-drag: none;
+    transition: all 0.3s;
+
+    .template-remove-icon {
+      position: absolute;
+      right: -8px;
+      top: -10px;
+      width: 23px;
+      height: 23px;
+      opacity: 0;
+      cursor: pointer;
+      color: var(--base-primary);
+      transform: scale(0);
+      transition: all 0.2s;
+
+      &:hover {
+        transform: scale(1.3);
+      }
+    }
+
+    &:hover {
+      z-index: 100;
+      box-shadow: var(--shadow-color-3);
+      transform: scale(1.05);
+
+      .template-remove-icon {
+        visibility: visible;
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  }
+}
+
+/* 媒体查询如果是移动设备 */
+@media (width <= 700px) {
   .toolbar {
     display: block;
     text-align: center;
 
-    .copy-btn,
-    .clear-btn {
-      margin-left: 10px;
-      margin-right: 10px;
+    .action-buttons {
       margin-top: 20px;
-      border-radius: 4px;
-      width: 34px;
-      height: 34px;
-      cursor: pointer;
     }
   }
 }

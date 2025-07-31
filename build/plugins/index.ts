@@ -6,10 +6,10 @@ import { compression } from "vite-plugin-compression2"
 import { chunkSplitPlugin } from "vite-plugin-chunk-split"
 import autoImport from "./plugin_autoImport"
 import envType from "./plugin_envType"
-import svgIcon from "./plugin_svgIcon"
 import vitePluginRequire from "vite-plugin-require"
 import legacy from "@vitejs/plugin-legacy"
 import { vitePluginForArco } from "@arco-plugins/vite-vue"
+import Icons from "unplugin-icons/vite"
 
 // @ts-ignore
 import type { PluginOption } from "vite"
@@ -26,14 +26,15 @@ export function createVitePlugins(isBuild: boolean): PluginOption[] {
     autoComponent(),
     // 按需加载，自动引入api
     autoImport(),
+    Icons({
+      autoInstall: true,
+    }),
     // 分包
     chunkSplitPlugin({
       strategy: "default",
     }),
     // 自动生成环境变量类型
     envType({ dts: "types/env.d.ts" }),
-    // 自动导入svg图标
-    svgIcon(),
     // 使vite支持require导入
     (vitePluginRequire as any).default(),
     legacy({

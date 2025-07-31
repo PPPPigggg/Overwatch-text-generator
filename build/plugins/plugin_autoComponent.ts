@@ -4,6 +4,7 @@
  */
 import Components from "unplugin-vue-components/vite"
 import { ArcoResolver } from "unplugin-vue-components/resolvers"
+import IconsResolver from "unplugin-icons/resolver"
 export default function () {
   return Components({
     dts: "types/components.d.ts",
@@ -17,6 +18,7 @@ export default function () {
       ArcoResolver({
         sideEffect: true,
       }),
+      IconsResolver({ prefix: false, extension: "jsx" }),
     ],
     dirs: ["src/components/*"],
     extensions: ["vue", "tsx", "ts"],
