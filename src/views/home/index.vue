@@ -43,7 +43,7 @@ const editorRef = ref<HTMLDivElement | null>(null)
 const genEmojisCode = (code: string) => `<TXC00${code}>`
 
 const genColorCode = (color: string, text: string) => {
-  if (!color) return ""
+  if (!color) return text
   return `<FG${color.replace("#", "")}FF>${text}</FG${color.replace("#", "")}FF>`
 }
 // 预设颜色
