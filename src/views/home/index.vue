@@ -287,7 +287,6 @@ function toNode(textContent: string): DocumentFragment {
       fragment.appendChild(document.createTextNode(remainingText))
     }
   }
-
   return fragment
 }
 
@@ -454,6 +453,12 @@ const handleResize = () => {
 onMounted(() => {
   handleResize()
 })
+
+const templateRender = (text: string) => {
+  const span = document.createElement("span")
+  span.appendChild(toNode(text))
+  return span.innerHTML
+}
 </script>
 
 <template>
@@ -597,7 +602,7 @@ onMounted(() => {
                 class="template-text-item"
                 @click="copyText(text)"
               >
-                <span>{{ text }}</span>
+                <span v-html="templateRender(text)"></span>
                 <ion:close-circle
                   @click.stop="delTemplateText(text)"
                   class="template-remove-icon"
