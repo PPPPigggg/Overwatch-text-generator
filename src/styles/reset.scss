@@ -23,26 +23,40 @@ body {
   }
 }
 
-// // 滚动条美化
-// ::-webkit-scrollbar {
-//   width: 8px;
-//   height: 8px;
-//   background: transparent;
-// }
+.dark {
+  &::selection {
+    border-radius: 2px !important;
+    outline: 1px solid rgb(255 214 95 / 60%) !important;
+    background: rgb(255 214 95 / 18%) !important; /* 半透明暖黄 */
+  }
+}
 
-// ::-webkit-scrollbar-thumb {
-//   border-radius: 6px;
-//   background: #e0e0e0;
-//   transition: background 0.2s;
-// }
+::selection {
+  border-radius: 2px;
+  outline: 1px solid rgb(51 153 255 / 60%); /* 可选，浏览器支持有限 */
+  background: rgb(51 153 255 / 18%); /* 半透明带蓝 */
+}
 
-// ::-webkit-scrollbar-thumb:hover {
-//   background: #bdbdbd;
-// }
+// 滚动条美化
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
 
-// ::-webkit-scrollbar-corner {
-//   background: transparent;
-// }
+::-webkit-scrollbar-thumb {
+  border-radius: 6px;
+  background: #e0e0e0;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #bdbdbd;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
 
 /* Firefox */
 * {

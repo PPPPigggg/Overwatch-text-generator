@@ -1,15 +1,15 @@
 <script lang="ts" setup>
 import CircularText from "./components/CircularText.vue"
-import FadeContent from "./components/FadeContent.vue"
 import EmojiPicker from "./components/EmojiPicker.vue"
+import FadeContent from "./components/FadeContent.vue"
 
 import SvgIcon from "@/components/svg-icon"
-import { ref } from "vue"
+import { useUserStore } from "@/stores/modules/state"
 import { copyText } from "@/utils/copy"
 import { useFetch } from "@vueuse/core"
-import { useUserStore } from "@/stores/modules/state"
-import type { IEmojiItem } from "./type"
 import { storeToRefs } from "pinia"
+import { ref } from "vue"
+import type { IEmojiItem } from "./type"
 
 const userStateStore = useUserStore()
 
@@ -61,26 +61,70 @@ const colors = [
   "#000000",
 ]
 
+/* 获取当前选取的内容 */
+function getSelectContent() {
+  const selection = window.getSelection() as Selection
+
+  if (!selection || selection.rangeCount <= 0)
+    return {
+      contents: null,
+      selection: null,
+      range: null,
+    }
+  const range = selection.getRangeAt(0)
+  const commonContainer = range.commonAncestorContainer
+
+  const startNode = range.startContainer
+  const endNode = range.endContainer
+  let parentNode = commonContainer.parentNode as HTMLElement | null
+
+  // 确保 parentNode 不是编辑器容器
+  if (
+    !(
+      parentNode &&
+      parentNode.nodeType === Node.ELEMENT_NODE &&
+      parentNode !== editorRef.value &&
+      editorRef.value?.contains(parentNode) &&
+      startNode === endNode
+    )
+  ) {
+    parentNode = null
+  }
+
+  const contents = range.cloneContents()
+
+  return {
+    parentNode, // 父节点，如果有父节点说明当前选取是在元素内部选中的
+    contents,
+    selection,
+    range,
+  }
+}
+
 // 插入图标
-const insertEmoji = (emoji: IEmojiItem) => {
+function insertEmoji(emoji: IEmojiItem) {
   editorRef.value?.focus()
 
   const renderEl = document.createDocumentFragment()
 
   const img = document.createElement("img")
   img.src = emoji.url
-  img.dataset.emojiCode = emoji.id // 使用 data-* 属性存储代码
+  img.dataset.emojiCode = emoji.id
+
+  // 使用零宽空格，避免图片被选中时出现offset和文本不一致的问题
+  const space = document.createTextNode("\u200B")
+  img.appendChild(space)
 
   renderEl.appendChild(img)
   insertNodeAtCursor(renderEl)
 }
 
-const applyColor = (color?: string) => {
+function applyColor(color?: string) {
   const selection = window.getSelection()
   if (selection && selection.rangeCount > 0) {
     const range = selection.getRangeAt(0)
     if (!range.collapsed) {
-      const contents = range.extractContents()
+      const contents = range.cloneContents()
 
       const renderEl = document.createDocumentFragment()
 
@@ -93,30 +137,10 @@ const applyColor = (color?: string) => {
           return
         }
 
-        // 如果是文本节点，直接包裹span
-        const spans = document.createDocumentFragment()
-
-        Array.from(el.textContent || "").forEach((char) => {
-          const span = wrapSpan(char, color)
-          spans.appendChild(span)
-        })
-
-        renderEl.appendChild(spans)
+        if (el.textContent)
+          renderEl.appendChild(wrapSpan(el.textContent, color))
       })
-
-      const commonContainer = range.commonAncestorContainer
-
-      const parentNode = commonContainer.parentNode as HTMLElement | null
-      if (
-        commonContainer.nodeType === Node.TEXT_NODE &&
-        parentNode &&
-        parentNode.nodeName === "SPAN"
-      ) {
-        parentNode.parentNode?.insertBefore(renderEl, parentNode.nextSibling)
-      } else {
-        range.insertNode(renderEl)
-        // Select the newly inserted content
-      }
+      insertNodeAtCursor(renderEl)
     }
   }
 }
@@ -128,7 +152,7 @@ const handleInput = (e: InputEvent) => {
 }
 
 // 包装span标签
-const wrapSpan = (text: string, color?: string) => {
+function wrapSpan(text: string, color?: string) {
   const span = document.createElement("span")
   if (color) {
     span.style.color = color
@@ -138,7 +162,7 @@ const wrapSpan = (text: string, color?: string) => {
   return span
 }
 // 清除 font 标签
-const clearFont = (e: InputEvent) => {
+function clearFont(e: InputEvent) {
   const target = e.target as HTMLElement
   Array.from(target.querySelectorAll("font")).forEach((font) => {
     // 存放所有子节点
@@ -152,71 +176,75 @@ const clearFont = (e: InputEvent) => {
 }
 
 // 复制内容
-const copyContent = async () => {
+function copyContent() {
   if (!editorRef.value) return
 
   const contentClone = document.createDocumentFragment()
-  contentClone.appendChild(editorRef.value.cloneNode(true))
-  const resultText = nodeToContent(contentClone)
+  Array.from(editorRef.value.cloneNode(true).childNodes).forEach((node) => {
+    contentClone.appendChild(node)
+  })
+  const resultText = toContent(contentClone)
 
   copyText(resultText)
 }
-function nodeToContent(node: DocumentFragment): string {
-  // 将图标图片替换为代码
-  node.querySelectorAll("img[data-emoji-code]").forEach((img) => {
-    const code = (img as HTMLElement).dataset.emojiCode
-    if (code) {
-      img.replaceWith(document.createTextNode(genEmojisCode(code)))
+
+/* 节点转换为对应代码 */
+function toContent(node: DocumentFragment): string {
+  const elList = Array.from(node.childNodes) as HTMLElement[]
+
+  const groups = elList.reduce(
+    (acc: HTMLElement[][], currentEl: HTMLElement) => {
+      if (!currentEl || !currentEl.textContent) return acc
+
+      const lastGroup = acc[acc.length - 1]
+      const lastEl = lastGroup?.[lastGroup.length - 1]
+
+      if (
+        lastEl &&
+        lastEl.nodeName === "SPAN" &&
+        currentEl.nodeName === "SPAN" &&
+        currentEl.dataset.colorCode === lastEl.dataset.colorCode
+      ) {
+        lastGroup.push(currentEl)
+      } else {
+        acc.push([currentEl])
+      }
+
+      return acc
+    },
+    [],
+  )
+
+  let content = ""
+
+  groups.forEach((group) => {
+    // 将图标图片替换为代码
+    const [firstEl] = group
+
+    if (firstEl.nodeType !== Node.ELEMENT_NODE) {
+      // 如果不是元素节点，直接添加
+      content += firstEl.textContent || ""
+      return
+    }
+
+    if (firstEl.nodeName === "IMG") {
+      content += genEmojisCode(firstEl.dataset.emojiCode || "")
+      return
+    }
+
+    if (firstEl.nodeName === "SPAN") {
+      const colorCode = firstEl.dataset.colorCode || ""
+      const combinedText = group.map((span) => span.textContent || "").join("")
+
+      content += genColorCode(colorCode, combinedText)
     }
   })
 
-  // 将带颜色的span转换为颜色代码
-
-  const spans = Array.from(
-    node.querySelectorAll("span[data-color-code]"),
-  ).filter(
-    (span) => span.textContent && span.textContent.trim() !== "",
-  ) as HTMLElement[]
-
-  if (spans.length !== 0) {
-    const groups: HTMLElement[][] = []
-    let groupSpan = [spans[0] as HTMLElement]
-    for (let i = 1; i < spans.length; i++) {
-      const currentSpan = spans[i] as HTMLElement
-      const previousSpan = spans[i - 1] as HTMLElement
-
-      if (currentSpan.dataset.colorCode === previousSpan?.dataset.colorCode) {
-        groupSpan.push(currentSpan)
-      } else {
-        groups.push(groupSpan)
-        groupSpan = [currentSpan]
-      }
-    }
-
-    // 添加最后一个分组
-    if (groupSpan.length > 0) {
-      groups.push(groupSpan)
-    }
-
-    groups.forEach((group) => {
-      const [firstSpan, ...restSpans] = group
-      const colorCode = firstSpan.dataset.colorCode || ""
-      const combinedText = group.map((span) => span.textContent || "").join("")
-
-      const textNode = document.createTextNode(
-        genColorCode(colorCode, combinedText),
-      )
-      firstSpan.replaceWith(textNode)
-
-      // 移除其余的span元素
-      restSpans.forEach((span) => span.remove())
-    })
-  }
-
-  return node.textContent || ""
+  return content
 }
 
-function contentToNode(textContent: string): DocumentFragment {
+/* 代码反转回原来的节点 */
+function toNode(textContent: string): DocumentFragment {
   const fragment = document.createDocumentFragment()
   let currentIndex = 0
 
@@ -255,7 +283,7 @@ function contentToNode(textContent: string): DocumentFragment {
         const span = document.createElement("span")
         span.style.color = `#${color}`
         span.dataset.colorCode = `#${color}`
-        const innerFragment = contentToNode(text)
+        const innerFragment = toNode(text)
         span.appendChild(innerFragment)
         fragment.appendChild(span)
       }
@@ -276,24 +304,26 @@ function contentToNode(textContent: string): DocumentFragment {
 }
 
 // 处理复制事件
-const handleCopy = (e: ClipboardEvent) => {
+function handleCopy(e: ClipboardEvent) {
   e.preventDefault()
-  const selection = window.getSelection()
+  const { contents, parentNode } = getSelectContent()
+  const fragment = document.createDocumentFragment()
 
-  if (!(selection && selection.rangeCount > 0)) return
+  // 如果有父节点，说明是选中元素内部的内容
+  if (parentNode) {
+    const parent = parentNode.cloneNode()
+    parent.appendChild(contents)
+    fragment.appendChild(parent)
+  } else if (contents) {
+    fragment.appendChild(contents)
+  }
 
-  const range = selection.getRangeAt(0)
-  if (range.collapsed) return
-
-  const contents = range.cloneContents()
-
-  const resultText = nodeToContent(contents)
-
+  const resultText = toContent(fragment)
   copyText(resultText)
 }
 
 // 处理剪切事件
-const handleCut = (e: ClipboardEvent) => {
+function handleCut(e: ClipboardEvent) {
   // 删除选中的内容
   const selection = window.getSelection()
   if (selection && selection.rangeCount > 0) {
@@ -310,14 +340,8 @@ const handleCut = (e: ClipboardEvent) => {
 }
 
 // 处理粘贴事件
-const handlePaste = (e: ClipboardEvent) => {
+function handlePaste(e: ClipboardEvent) {
   e.preventDefault()
-
-  const selection = window.getSelection()
-
-  if (!(selection && selection.rangeCount > 0)) return
-
-  const range = selection.getRangeAt(0)
 
   const clipboardData = e.clipboardData
   if (!clipboardData) return
@@ -325,50 +349,78 @@ const handlePaste = (e: ClipboardEvent) => {
   // 获取纯文本内容
   const textData = clipboardData.getData("text/plain")
 
-  const fragment = contentToNode(textData)
+  const fragment = toNode(textData)
   if (fragment.childNodes.length > 0) {
-    range.deleteContents() // 删除选中的内容
-    range.insertNode(fragment) // 插入新的内容
-
-    range.collapse()
-
-    selection.removeAllRanges()
-    selection.addRange(range)
+    insertNodeAtCursor(fragment)
   }
 }
 
 // 在光标位置插入节点
-const insertNodeAtCursor = (node: DocumentFragment) => {
-  const selection = window.getSelection()
-  if (selection && selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0)
-    range.deleteContents()
-    range.insertNode(node)
+function insertNodeAtCursor(node: DocumentFragment) {
+  const { range, parentNode, selection } = getSelectContent()
 
-    range.collapse()
-    selection.removeAllRanges()
-    selection.addRange(range)
-  } else if (editorRef.value) {
-    // 如果没有选区，插入到编辑器末尾
-    editorRef.value.appendChild(node)
+  if (!range || !selection) return
+
+  // TODO: 判断元素是否相同，相同则合并
+  range?.deleteContents()
+  // 确保 parentNode 不是编辑器容器
+  if (parentNode) {
+    const renderEl = document.createDocumentFragment()
+
+    // 计算选区在文本节点中的起始和结束位置
+    const startOffset = range.startOffset
+    const endOffset = range.endOffset
+
+    // 创建三个 el 元素：前、中、后
+    const beforeEl = parentNode.cloneNode()
+    beforeEl.textContent = parentNode.textContent?.slice(0, startOffset) || ""
+
+    const middleEl = node
+
+    const afterEl = parentNode.cloneNode()
+    afterEl.textContent = parentNode.textContent?.slice(endOffset) || ""
+
+    // 将新的 span 元素添加到 renderEl 中
+    if (beforeEl.textContent) renderEl.appendChild(beforeEl)
+    if (middleEl.childNodes) renderEl.appendChild(middleEl)
+    if (afterEl.textContent) renderEl.appendChild(afterEl)
+
+    const lastNodeInsert = renderEl.lastChild
+    // 替换原始 span 元素
+    parentNode.replaceWith(renderEl)
+    // 将光标移动到插入的内容后面
+    if (lastNodeInsert) {
+      range.setStartBefore(lastNodeInsert)
+      range.collapse(true)
+    }
+  } else {
+    range.insertNode(node)
+    range.collapse(false)
   }
+
+  // 重置选区
+  selection.removeAllRanges()
+  selection.addRange(range)
 }
 
 // 清空内容
-const clearContent = () => {
+function clearContent() {
   if (editorRef.value) {
     editorRef.value.innerHTML = ""
   }
 }
 
-const popAnimation = ref("zoom-in-right")
+const popAnimation = ref("zoom-in-left")
+const popEmojiOffset = ref(20)
 // 当前宽度小于700px时，使用zoom -in -right动画
 
 const handleResize = () => {
   if (window.innerWidth < 780) {
     popAnimation.value = "zoom-in"
+    popEmojiOffset.value = 0
   } else {
     popAnimation.value = "zoom-in-left"
+    popEmojiOffset.value = 20
   }
 }
 
@@ -435,7 +487,7 @@ onMounted(() => {
             trigger="click"
             :unmount-on-close="false"
             update-at-scroll
-            :popup-offset="20"
+            :popup-offset="popEmojiOffset"
             position="right"
             :animation-name="popAnimation"
           >
@@ -457,6 +509,7 @@ onMounted(() => {
           <div class="rich-input-container-inner">
             <!-- 输入框 -->
             <div
+              id="editor"
               ref="editorRef"
               contenteditable="true"
               class="editor"
