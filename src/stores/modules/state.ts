@@ -85,7 +85,10 @@ export const useUserStore = defineStore("userState", {
       }
     },
     removeEmoji(emojiId: string) {
-      this.topEmojis = this.topEmojis.filter((id) => id !== emojiId)
+      const index = this.topEmojis.indexOf(emojiId)
+      if (index !== -1) {
+        this.topEmojis.splice(index, 1)
+      }
     },
 
     changeTemlateText(text: string) {
@@ -102,7 +105,10 @@ export const useUserStore = defineStore("userState", {
       }
     },
     removeTemplateText(text: string) {
-      this.templateTextList = this.templateTextList.filter((t) => t !== text)
+      const index = this.templateTextList.indexOf(text)
+      if (index !== -1) {
+        this.templateTextList.splice(index, 1)
+      }
     },
 
     iKnowTip() {

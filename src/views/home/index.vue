@@ -631,20 +631,24 @@ const templateRender = (text: string) => {
 </style>
 
 <style lang="scss" scoped>
-.template-list-move, /* 对移动中的元素应用的过渡 */
+.template-list-move,
 .template-list-enter-active,
 .template-list-leave-active {
-  transition: all 0.5s ease;
+  transition: all 0.3s ease;
+
+  /* transition-property: opacity, transform; */
 }
 
-.template-list-enter-from,
+.template-list-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
 .template-list-leave-to {
   opacity: 0;
-  transform: scale(0);
+  transform: translateY(-10px);
 }
 
-/* 确保将离开的元素从布局流中删除
-  以便能够正确地计算移动的动画。 */
 .template-list-leave-active {
   position: absolute;
 }
@@ -884,7 +888,6 @@ body[arco-theme="dark"] .emoji {
   }
 
   .template-text-item {
-    position: relative;
     box-sizing: border-box;
     padding: 8px 6px;
     border-radius: 10px;
