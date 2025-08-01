@@ -891,14 +891,14 @@ body[arco-theme="dark"] .emoji {
     box-sizing: border-box;
     padding: 8px 6px;
     border-radius: 10px;
-    background-color: white;
+    background-color: var(--bg-color-2);
     box-shadow:
-      0 0 #0000,
-      0 0 #0000,
-      0 0 #0000,
-      0 0 #0000,
+      0 0 var(--bg-color-2),
+      0 0 var(--bg-color-2),
+      0 0 var(--bg-color-2),
+      0 0 var(--bg-color-2),
       0 1px 3px 0 rgb(0 0 0 / 20%),
-      0 0.5px 0.5px 0.5px #fff inset;
+      0 0.5px 0.5px 0.5px var(--bg-color-2) inset;
     cursor: pointer;
     -webkit-user-drag: none;
     transition: all 0.3s;
